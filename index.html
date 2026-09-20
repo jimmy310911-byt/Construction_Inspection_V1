@@ -4,396 +4,356 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>查驗紀錄站</title>
-    <!-- Tailwind CSS for Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- JSZip for downloading multiple files as an archive -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
-        /* Custom styles to mimic Outlook/Clean UI */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f5f7; }
         
-        /* 月檢視網格 */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #e5e7eb; }
-        .calendar-cell { background-color: white; min-height: 100px; padding: 4px; transition: background-color 0.2s; cursor: pointer; display: flex; flex-direction: column; }
+        /* 月檢視樣式 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background-color: #e5e7eb; min-width: 700px; }
+        .calendar-cell { background-color: white; min-height: 100px; padding: 4px; transition: background-color 0.2s; cursor: pointer; }
         .calendar-cell:hover { background-color: #f9fafb; }
         .calendar-cell.other-month { background-color: #f9fafb; color: #9ca3af; }
         .calendar-cell.today { background-color: #eff6ff; }
         
-        /* 週檢視網格 (含時間軸) */
-        .week-view-container { display: flex; flex-direction: column; height: 100%; min-width: 600px; }
-        .week-header-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(0, 1fr)); border-bottom: 1px solid #e5e7eb; background-color: #f9fafb; position: sticky; top: 0; z-index: 10; }
-        .week-body-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(0, 1fr)); background-color: #e5e7eb; gap: 1px; }
-        .time-axis-cell { background-color: #f9fafb; text-align: center; padding-top: 4px; font-size: 0.75rem; color: #6b7280; font-weight: 500; height: 60px; border-right: 1px solid #e5e7eb; }
-        .week-day-col { background-color: white; display: flex; flex-direction: column; position: relative; }
-        .hour-slot { height: 60px; border-bottom: 1px solid #f3f4f6; cursor: pointer; padding: 2px; }
-        .hour-slot:hover { background-color: #f9fafb; }
+        /* 週檢視樣式 */
+        .week-header-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 1px; }
+        .week-body-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 1px; background-color: #e5e7eb; }
+        .time-axis-cell { background-color: white; height: 60px; text-align: center; font-size: 0.75rem; color: #6b7280; padding-top: 4px; border-bottom: 1px solid #f3f4f6; }
+        .week-day-col { background-color: white; position: relative; }
+        .hour-slot { height: 60px; border-bottom: 1px dashed #e5e7eb; box-sizing: border-box; }
         
-        .event-badge { font-size: 0.7rem; padding: 4px; margin-bottom: 2px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; }
-        .event-badge:hover { transform: scale(1.02); }
-        .event-badge.mode-view { background-color: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
-        .event-badge.mode-edit { background-color: #fef3c7; color: #92400e; border-left: 2px solid #f59e0b; }
-        .event-badge.cloud-synced { background-color: #e0e7ff; color: #3730a3; border-left: 2px solid #6366f1; } /* 雲端資料顏色 */
-
-        /* Hide scrollbar for sidebar */
+        /* 紀錄標籤 */
+        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; }
+        .event-badge:hover { transform: scale(1.02); z-index: 50 !important; }
+        .mode-view { background-color: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
+        .cloud-synced { background-color: #dcfce3; color: #166534; border-left: 2px solid #22c55e; }
+        
+        /* 隱藏卷軸 (選用) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .photo-preview-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .photo-preview-item { position: relative; padding-top: 100%; background-color: #f3f4f6; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-        .photo-preview-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .remove-photo-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-gray-800">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 bg-blue-600 text-white flex justify-between items-center">
+            <h2 class="text-xl font-bold">查驗紀錄站</h2>
+            <button onclick="toggleSidebar()" class="text-white hover:text-gray-200 focus:outline-none">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <button onclick="setMode('add')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
+                <i class="fas fa-plus-circle w-5"></i>
+                <span class="font-medium">1 廠商登錄查驗</span>
+            </button>
+            <button onclick="setMode('edit')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors hover:bg-orange-50 text-gray-700 hover:text-orange-700 border border-transparent hover:border-orange-200">
+                <i class="fas fa-edit w-5"></i>
+                <span class="font-medium">2 監造查驗資料登錄/修改</span>
+            </button>
+            <button onclick="setMode('view')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors hover:bg-green-50 text-gray-700 hover:text-green-700 border border-transparent hover:border-green-200">
+                <i class="fas fa-list-alt w-5"></i>
+                <span class="font-medium">3 查驗紀錄總覽</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-full relative">
+        <!-- Header -->
+        <header id="mainHeader" class="bg-blue-600 text-white shadow-md flex flex-wrap items-center justify-between p-3 z-10 transition-colors duration-300">
+            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+                <button onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">查驗紀錄站</h1>
+                    <div id="modeIndicator" class="text-xs bg-white bg-opacity-20 rounded px-2 py-0.5 mt-0.5 inline-block">目前模式: 廠商登錄查驗</div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <div class="bg-white bg-opacity-20 rounded-lg p-1 flex">
+                    <button onclick="switchView('month')" id="btnMonthView" class="px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
+                    <button onclick="switchView('week')" id="btnWeekView" class="px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
+                </div>
+                
+                <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-2">
+                    <button onclick="changeDateOffset(-1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left"></i></button>
+                    <span id="currentMonthLabel" class="font-bold min-w-[100px] text-center text-sm sm:text-base">2026年 9月</span>
+                    <button onclick="changeDateOffset(1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Calendar Container (Scrollable horizontally on mobile) -->
+        <div id="calendarContainer" class="flex-1 overflow-auto bg-white flex flex-col">
+            <!-- Calendar grid will be injected here -->
+        </div>
+        
+        <!-- Cloud Sync Status -->
+        <div id="syncStatus" class="absolute bottom-2 right-2 text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded-full flex items-center space-x-1 z-10 hidden">
+            <i class="fas fa-cloud-download-alt"></i>
+            <span>已同步雲端</span>
+        </div>
+    </div>
+
+    <!-- Modal (Floating Window) -->
+    <div id="dataModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-full flex flex-col overflow-hidden relative">
+            <div id="modalHeader" class="bg-blue-600 text-white p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-lg" id="modalTitle">登錄查驗</h3>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1 text-sm">
+                <form id="recordForm" class="space-y-4">
+                    <input type="hidden" id="recordId">
+                    <input type="hidden" id="isFromCloud" value="false">
+                    <input type="hidden" id="oldFolderName" value="">
+                    
+                    <div id="editBadgeContainer" class="flex justify-end hidden">
+                        <!-- '已編輯' badge goes here -->
+                    </div>
+
+                    <!-- A. 查驗日期 -->
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">A. 查驗日期 (必選) <span class="text-red-500">*</span></label>
+                        <select id="fieldA_select" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200" onchange="handleDateSelectChange()">
+                            <option value="">請選擇</option>
+                            <option value="tomorrow">明天</option>
+                            <option value="today">今天</option>
+                            <option value="custom">日期選擇...</option>
+                        </select>
+                        <div id="fieldA_custom_container" class="mt-2 hidden">
+                            <input type="date" id="fieldA_date" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- B. 查驗時間 -->
+                    <div id="fieldB_container">
+                        <label class="block font-semibold text-gray-700 mb-1">B. 查驗時間 (必選) <span class="text-red-500">*</span></label>
+                        <div class="flex space-x-2">
+                            <input type="time" id="fieldB_time" class="flex-1 border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500">
+                            <button type="button" id="btnNow" onclick="setNowTime()" class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 whitespace-nowrap">現在時間</button>
+                        </div>
+                    </div>
+
+                    <!-- C. 查驗項目 -->
+                    <div id="fieldC_container">
+                        <label class="block font-semibold text-gray-700 mb-1">C. 查驗項目 (必填) <span class="text-red-500">*</span></label>
+                        <input type="text" id="fieldC_item" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫查驗項目">
+                    </div>
+
+                    <!-- D. 查驗地點 -->
+                    <div id="fieldD_container">
+                        <label class="block font-semibold text-gray-700 mb-1">D. 查驗地點 (選填)</label>
+                        <input type="text" id="fieldD_location" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫查驗地點">
+                    </div>
+
+                    <!-- E. 查驗照片 -->
+                    <div id="fieldE_container">
+                        <label class="block font-semibold text-gray-700 mb-1">E. 查驗照片 (最多四張) <span class="text-red-500" id="photoReqStar">*</span></label>
+                        <input type="file" id="fieldE_photo" accept="image/*" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" onchange="handlePhotoUpload(event)">
+                        <div id="photoPreviewContainer" class="grid grid-cols-2 gap-2 mt-2">
+                            <!-- Photos preview will be appended here -->
+                        </div>
+                    </div>
+
+                    <!-- F. 施工廠商 -->
+                    <div id="fieldF_container">
+                        <label class="block font-semibold text-gray-700 mb-1">F. 施工廠商 (名字必填) <span class="text-red-500" id="contractorReqStar">*</span></label>
+                        <input type="text" id="fieldF_contractor" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫廠商名稱">
+                    </div>
+
+                    <!-- G. 現場查驗監造 -->
+                    <div id="fieldG_container">
+                        <label class="block font-semibold text-gray-700 mb-1">G. 現場查驗監造 (名字必填) <span class="text-red-500" id="inspectorReqStar">*</span></label>
+                        <input type="text" id="fieldG_inspector" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫監造名稱">
+                    </div>
+                </form>
+            </div>
+            
+            <div class="p-4 border-t bg-gray-50 shrink-0">
+                <!-- Add/Edit Mode Buttons -->
+                <div id="actionButtonsContainer">
+                    <button type="button" onclick="saveRecord()" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none flex justify-center items-center">
+                        <span id="btnSubmitText">完成上傳</span>
+                        <i id="btnSubmitLoader" class="fas fa-circle-notch fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+                
+                <!-- Delete Button Container (Only in Edit mode) -->
+                <div id="deleteBtnContainer" class="mt-3 hidden">
+                    <button type="button" onclick="deleteRecord()" class="w-full bg-white text-red-600 border border-red-200 font-semibold py-2 rounded-lg shadow-sm hover:bg-red-50 focus:outline-none flex justify-center items-center transition-colors">
+                        <i class="fas fa-trash-alt mr-2"></i> 刪除紀錄
+                    </button>
+                </div>
+
+                <!-- View Mode Buttons -->
+                <div id="downloadButtonsContainer" class="hidden flex space-x-2">
+                    <button type="button" onclick="downloadPhotos()" class="flex-1 bg-white text-blue-600 border border-blue-600 font-bold py-2 rounded-lg hover:bg-blue-50 focus:outline-none text-sm">下載照片</button>
+                    <button type="button" onclick="downloadRecordText()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 focus:outline-none text-sm">下載紀錄</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         let records = [];
         const STORAGE_KEY = 'inspection_records_data';
         
-        // 最新 API 端點
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0gm2QMcaluNA4ME4mTQJVPZaiq0DdMzx5WzM7IQoBjosgQrO5oukK2jr30juTJ4QzSw/exec';
+        // 1. 最新 API 端點更新
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsdSn-gLMQ2mlK00l4QvBu7OXR9u6WjlFCzucmR1LAW2RTYvBkZuuyHRmq9FnIrvTLRA/exec';
 
         const state = {
-            currentDate: new Date(),
-            appMode: 'view', // 'view', 'add', 'edit', 'overview'
-            viewMode: 'month', // 'month' or 'week'
-            isSidebarOpen: false,
-            isModalOpen: false,
-            modalData: null,
-            photosBase64: [],
-            originalDataStr: ""
+            appMode: 'add', // 'add', 'edit', 'view'
+            viewMode: 'month', // 'month', 'week'
+            currentDate: new Date()
         };
 
-        // DOM Elements
-        const el = {
-            mainHeader: document.getElementById('mainHeader'),
-            sidebar: document.getElementById('sidebar'),
-            sidebarOverlay: document.getElementById('sidebarOverlay'),
-            menuBtn: document.getElementById('menuBtn'),
-            currentMonthLabel: document.getElementById('currentMonthLabel'),
-            calendarContainer: document.getElementById('calendarContainer'),
+        const currentPhotos = []; // Store base64 strings
+        const el = {};
+
+        // 初始化
+        window.onload = function() {
+            cacheDOM();
+            loadRecordsFromLocal();
+            renderCalendar();
             
-            // Modal Elements
-            modalOverlay: document.getElementById('modalOverlay'),
-            modalTitle: document.getElementById('modalTitle'),
-            modalClose: document.getElementById('modalClose'),
-            form: document.getElementById('inspectionForm'),
-            
-            // Form Fields
-            fieldA_type: document.getElementById('fieldA_type'),
-            fieldA_custom: document.getElementById('fieldA_custom'),
-            fieldA_custom_container: document.getElementById('fieldA_custom_container'),
-            fieldB_custom: document.getElementById('fieldB_custom'),
-            btnNow: document.getElementById('btnNow'),
-            fieldC: document.getElementById('fieldC'),
-            fieldD: document.getElementById('fieldD'),
-            
-            // Conditional Fields
-            conditionalSection: document.getElementById('conditionalSection'),
-            fieldE_input: document.getElementById('fieldE_input'),
-            photoPreviewContainer: document.getElementById('photoPreviewContainer'),
-            fieldF: document.getElementById('fieldF'),
-            fieldG: document.getElementById('fieldG'),
-            
-            // Buttons
-            btnSave: document.getElementById('btnSave'),
-            deleteBtnContainer: document.getElementById('deleteBtnContainer'),
-            btnDeleteRecord: document.getElementById('btnDeleteRecord'),
-            actionButtonsContainer: document.getElementById('actionButtonsContainer'),
-            downloadButtonsContainer: document.getElementById('downloadButtonsContainer'),
-            btnDownloadPhotos: document.getElementById('btnDownloadPhotos'),
-            btnDownloadRecord: document.getElementById('btnDownloadRecord'),
-            
-            // Mode & View Indicators
-            modeIndicator: document.getElementById('modeIndicator'),
-            editBadgeContainer: document.getElementById('editBadgeContainer'),
-            btnViewMonth: document.getElementById('btnViewMonth'),
-            btnViewWeek: document.getElementById('btnViewWeek'),
-            cloudSyncStatus: document.getElementById('cloudSyncStatus')
+            // 開機自動從雲端同步歷史資料
+            fetchDataFromCloud();
         };
 
-        // Date Format Helpers
-        function formatDate(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}/${m}/${d}`;
+        function cacheDOM() {
+            const ids = ['sidebar', 'sidebarOverlay', 'mainHeader', 'modeIndicator', 'currentMonthLabel', 
+                         'calendarContainer', 'dataModal', 'modalTitle', 'modalHeader', 'recordForm',
+                         'fieldA_select', 'fieldA_custom_container', 'fieldA_date', 'fieldB_time',
+                         'fieldC_item', 'fieldD_location', 'fieldE_photo', 'photoPreviewContainer',
+                         'fieldF_contractor', 'fieldG_inspector', 'actionButtonsContainer', 'downloadButtonsContainer',
+                         'btnSubmit', 'btnSubmitText', 'btnSubmitLoader', 'editBadgeContainer',
+                         'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer'];
+            ids.forEach(id => el[id] = document.getElementById(id));
         }
 
-        function formatTime(date) {
-            const h = String(date.getHours()).padStart(2, '0');
-            const m = String(date.getMinutes()).padStart(2, '0');
-            return `${h}:${m}`;
+        function loadRecordsFromLocal() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    records = JSON.parse(data);
+                } catch(e) {
+                    records = [];
+                }
+            }
         }
 
-        function getTomorrow() {
-            const d = new Date();
-            d.setDate(d.getDate() + 1);
-            return d;
+        function saveRecordsToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
         }
         
-        function getStartOfWeek(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day; // Adjust to Sunday
-            return new Date(d.setDate(diff));
-        }
-
-        // --- 核心功能：從雲端載入資料 ---
-        async function loadDataFromCloud() {
-            el.cloudSyncStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> 正在同步雲端資料...';
-            el.cloudSyncStatus.classList.remove('hidden');
-            
+        async function fetchDataFromCloud() {
             try {
-                const response = await fetch(GOOGLE_SCRIPT_URL);
-                if (!response.ok) throw new Error('Network error');
+                // 使用 GET 請求撈取資料，加上 redirect: 'follow' 確保跟隨 Google 的轉址
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'GET',
+                    redirect: 'follow'
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const result = await response.json();
                 
-                const data = await response.json();
-                
-                if (data.status === 'success' && data.records) {
-                    // 合併資料：保留有照片的本地資料（因為剛編輯過），將雲端純文字資料補入
-                    const localRecords = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                    const merged = [...localRecords];
+                if (result.status === 'success' && result.records) {
+                    // 合併雲端與本地資料 (以雲端為主)
+                    const cloudRecords = result.records;
+                    const mergedRecords = [...records];
                     
-                    data.records.forEach(cloudRec => {
-                        // 檢查本地是否已經有同日期、同項目的資料
-                        const exists = merged.find(r => r.date === cloudRec.date && r.item === cloudRec.item);
-                        if (!exists) {
-                            // 賦予預設ID並加入
-                            cloudRec.id = cloudRec.id || 'CLOUD_' + Date.now() + Math.random();
-                            merged.push(cloudRec);
+                    cloudRecords.forEach(cr => {
+                        const existingIdx = mergedRecords.findIndex(r => r.id === cr.id);
+                        if (existingIdx >= 0) {
+                            // Update existing
+                            mergedRecords[existingIdx] = {...mergedRecords[existingIdx], ...cr};
+                        } else {
+                            // Add new
+                            mergedRecords.push(cr);
                         }
                     });
                     
-                    records = merged;
-                    saveData();
+                    records = mergedRecords;
+                    saveRecordsToLocal();
                     renderCalendar();
-                    el.cloudSyncStatus.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> 同步完成';
-                    setTimeout(() => el.cloudSyncStatus.classList.add('hidden'), 3000);
-                } else {
-                    throw new Error(data.message || '格式異常');
+                    
+                    // Show sync indicator briefly
+                    el.syncStatus.classList.remove('hidden');
+                    setTimeout(() => el.syncStatus.classList.add('hidden'), 3000);
                 }
             } catch (error) {
-                console.warn("讀取雲端資料失敗(可能是新環境尚未授權):", error);
-                el.cloudSyncStatus.innerHTML = '<i class="fas fa-exclamation-triangle text-orange-500"></i> 雲端同步失敗，顯示本機資料';
-                setTimeout(() => el.cloudSyncStatus.classList.add('hidden'), 4000);
+                console.warn("⚠️ 預覽環境或跨網域限制，無法同步雲端資料。發佈至 Netlify 後即可正常運作。錯誤細節:", error.message);
+                // 忽略錯誤，容許離線使用本地資料
             }
         }
 
-        // Local Storage
-        function loadData() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) records = JSON.parse(stored);
-            renderCalendar();
-        }
-
-        function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-        }
-
-        // --- UI Rendering ---
-        
-        function switchView(view) {
-            state.viewMode = view;
-            
-            if(view === 'month') {
-                el.btnViewMonth.classList.replace('text-white', 'text-gray-800');
-                el.btnViewMonth.classList.replace('hover:bg-white/10', 'bg-white');
-                el.btnViewWeek.classList.replace('text-gray-800', 'text-white');
-                el.btnViewWeek.classList.replace('bg-white', 'hover:bg-white/10');
-            } else {
-                el.btnViewWeek.classList.replace('text-white', 'text-gray-800');
-                el.btnViewWeek.classList.replace('hover:bg-white/10', 'bg-white');
-                el.btnViewMonth.classList.replace('text-gray-800', 'text-white');
-                el.btnViewMonth.classList.replace('bg-white', 'hover:bg-white/10');
-            }
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            el.calendarContainer.innerHTML = '';
-            if (state.viewMode === 'month') {
-                renderMonthView();
-            } else {
-                renderWeekView();
-            }
-        }
-
-        function renderMonthView() {
-            const year = state.currentDate.getFullYear();
-            const month = state.currentDate.getMonth();
-            el.currentMonthLabel.innerText = `${year}年 ${month + 1}月`;
-            
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startingDayOfWeek = firstDay.getDay(); 
-            const totalDays = lastDay.getDate();
-            
-            // Header for Days
-            let html = `
-            <div class="grid grid-cols-7 border-b bg-gray-50 text-center py-2 text-sm font-semibold text-gray-600 sticky top-0 z-10">
-                <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-            </div>
-            <div class="flex-1 calendar-grid overflow-y-auto">`;
-            
-            const prevMonthLastDay = new Date(year, month, 0).getDate();
-            for (let i = 0; i < startingDayOfWeek; i++) {
-                const d = new Date(year, month - 1, prevMonthLastDay - startingDayOfWeek + i + 1);
-                html += generateCellHtml(d, true);
-            }
-            
-            const today = new Date();
-            for (let i = 1; i <= totalDays; i++) {
-                const d = new Date(year, month, i);
-                const isToday = d.toDateString() === today.toDateString();
-                html += generateCellHtml(d, false, isToday);
-            }
-            
-            const remainingCells = 42 - (startingDayOfWeek + totalDays);
-            for (let i = 1; i <= remainingCells; i++) {
-                const d = new Date(year, month + 1, i);
-                html += generateCellHtml(d, true);
-            }
-            
-            html += `</div>`;
-            el.calendarContainer.innerHTML = html;
-        }
-
-        function renderWeekView() {
-            const startOfWeek = getStartOfWeek(state.currentDate);
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            
-            // Set label to show week range
-            const formatShortDate = (d) => `${d.getMonth()+1}/${d.getDate()}`;
-            el.currentMonthLabel.innerText = `${formatShortDate(startOfWeek)} - ${formatShortDate(endOfWeek)}`;
-
-            const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-            let headerHtml = `<div class="week-header-grid text-sm font-semibold text-gray-600 text-center py-2">
-                <div>時間</div>`;
-            
-            const days = [];
-            for(let i=0; i<7; i++) {
-                const d = new Date(startOfWeek);
-                d.setDate(d.getDate() + i);
-                days.push(d);
-                const isToday = d.toDateString() === new Date().toDateString();
-                headerHtml += `<div class="${isToday ? 'text-blue-600 font-bold' : ''}">${dayNames[i]} (${formatShortDate(d)})</div>`;
-            }
-            headerHtml += `</div>`;
-
-            let bodyHtml = `<div class="flex-1 overflow-x-auto overflow-y-auto relative no-scrollbar"><div class="week-body-grid min-w-[600px]">`;
-            
-            // Create time axis
-            bodyHtml += `<div class="flex flex-col bg-white">`;
-            for(let h=0; h<24; h++) {
-                bodyHtml += `<div class="time-axis-cell">${String(h).padStart(2,'0')}:00</div>`;
-            }
-            bodyHtml += `</div>`;
-
-            // Create 7 columns for days
-            for(let i=0; i<7; i++) {
-                const dateStr = formatDate(days[i]);
-                const dayEvents = records.filter(r => r.date === dateStr);
-                
-                bodyHtml += `<div class="week-day-col">`;
-                
-                // Render 24 empty slots for visual grid
-                for(let h=0; h<24; h++) {
-                    bodyHtml += `<div class="hour-slot"></div>`;
-                }
-                
-                // Absolute position events over the grid
-                dayEvents.forEach(ev => {
-                    const timeParts = ev.time.split(':');
-                    let topOffset = 0;
-                    if(timeParts.length === 2 && !isNaN(timeParts[0])) {
-                        const hours = parseInt(timeParts[0]);
-                        const mins = parseInt(timeParts[1]);
-                        topOffset = (hours * 60) + mins; // 1px per minute since slot is 60px height
-                    }
-                    
-                    const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
-                    const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
-                    
-                    bodyHtml += `
-                        <div class="event-badge ${badgeClass} shadow-md absolute left-1 right-1 z-10" 
-                             style="top: ${topOffset}px;" 
-                             onclick="handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
-                            <div class="font-bold text-xs">${ev.time}</div>
-                            <div class="truncate">${ev.item}</div>
-                            <div class="truncate text-[10px] opacity-75">${ev.contractor || ''}</div>
-                        </div>
-                    `;
-                });
-                
-                bodyHtml += `</div>`;
-            }
-            
-            bodyHtml += `</div></div>`;
-            el.calendarContainer.innerHTML = `<div class="week-view-container">${headerHtml}${bodyHtml}</div>`;
-        }
-
-        function generateCellHtml(cellDate, isOtherMonth, isToday = false) {
-            const dateStr = formatDate(cellDate);
-            let html = `<div class="calendar-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}">
-                <div class="text-right p-1 ${isToday ? 'font-bold text-blue-600' : 'text-gray-700'}">${cellDate.getDate()}</div>
-                <div class="flex-1 overflow-y-auto px-1 pb-1 no-scrollbar">`;
-            
-            const dayEvents = records.filter(r => r.date === dateStr);
-            dayEvents.forEach(ev => {
-                const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
-                const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
-                const editedMark = ev.isEdited ? '<span class="text-[10px] text-orange-500 ml-1">(編)</span>' : '';
-                
-                html += `
-                    <div class="event-badge ${badgeClass} shadow-sm truncate" onclick="handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
-                        ${ev.time} ${ev.item} ${editedMark}
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-            return html;
-        }
-
-        function toggleSidebar() {
-            state.isSidebarOpen = !state.isSidebarOpen;
-            if (state.isSidebarOpen) {
-                el.sidebar.classList.remove('-translate-x-full');
-                el.sidebarOverlay.classList.remove('hidden');
-            } else {
+        window.toggleSidebar = function() {
+            const isOpen = !el.sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
                 el.sidebar.classList.add('-translate-x-full');
                 el.sidebarOverlay.classList.add('hidden');
+            } else {
+                el.sidebar.classList.remove('-translate-x-full');
+                el.sidebarOverlay.classList.remove('hidden');
             }
-        }
+        };
 
-        // 動態更換 Header 顏色
-        function updateHeaderColor() {
-            el.mainHeader.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-green-600');
-            if (state.appMode === 'add') el.mainHeader.classList.add('bg-blue-600');
-            else if (state.appMode === 'edit') el.mainHeader.classList.add('bg-orange-600');
-            else if (state.appMode === 'overview') el.mainHeader.classList.add('bg-green-600');
-            else el.mainHeader.classList.add('bg-blue-600'); // default
-        }
-
-        function setAppMode(mode, title) {
+        window.setMode = function(mode) {
             state.appMode = mode;
-            updateHeaderColor();
-            
-            el.modeIndicator.innerText = `目前模式: ${title}`;
-            el.modeIndicator.classList.remove('hidden');
             toggleSidebar();
             
+            // 4. 不同模式更新標題列顏色與文字
+            el.mainHeader.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-green-600');
+            el.modalHeader.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-green-600');
+            el.btnSubmit.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-orange-600', 'hover:bg-orange-700');
+            
             if (mode === 'add') {
-                openModal();
-            } else {
-                alert(`請在行事曆上點選要${mode === 'edit' ? '編輯' : '檢視'}的紀錄。`);
+                el.modeIndicator.innerText = '目前模式: 廠商登錄查驗';
+                el.mainHeader.classList.add('bg-blue-600');
+                el.modalHeader.classList.add('bg-blue-600');
+                el.btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            } else if (mode === 'edit') {
+                el.modeIndicator.innerText = '目前模式: 監造資料登錄 / 修改';
+                el.mainHeader.classList.add('bg-orange-600');
+                el.modalHeader.classList.add('bg-orange-600');
+                el.btnSubmit.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            } else if (mode === 'view') {
+                el.modeIndicator.innerText = '目前模式: 查驗紀錄總覽';
+                el.mainHeader.classList.add('bg-green-600');
+                el.modalHeader.classList.add('bg-green-600');
             }
-        }
+            
+            renderCalendar();
+        };
 
-        function changeDateOffset(delta) {
+        window.switchView = function(view) {
+            state.viewMode = view;
+            
+            if (view === 'month') {
+                el.btnMonthView.className = "px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors";
+                el.btnWeekView.className = "px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
+            } else {
+                el.btnWeekView.className = "px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors";
+                el.btnMonthView.className = "px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
+            }
+            
+            renderCalendar();
+        };
+
+        window.changeDateOffset = function(delta) {
             if(state.viewMode === 'month') {
                 state.currentDate.setMonth(state.currentDate.getMonth() + delta);
             } else {
@@ -405,7 +365,8 @@
         window.handleEventClick = function(event, id) {
             event.stopPropagation();
             if (state.appMode === 'add') {
-                alert('請先完成或關閉當前新增作業。');
+                // 4. 修改提示詞
+                alert('請於 監造查驗資料登錄 作更動時間或填寫紀錄。');
                 return;
             }
             
@@ -414,45 +375,47 @@
         };
 
         function openModal(existingData = null) {
-            state.isModalOpen = true;
-            state.modalData = existingData;
-            state.photosBase64 = existingData?.photos ? [...existingData.photos] : [];
-            
-            el.modalOverlay.classList.remove('hidden');
-            el.modalOverlay.classList.add('flex');
-            
             resetForm();
+            currentPhotos.length = 0;
             
-            if (state.appMode === 'overview') {
+            if (state.appMode === 'add' && !existingData) {
+                el.modalTitle.innerText = '登錄查驗 (建議前一天登錄)';
+                el.btnSubmitText.innerText = '完成上傳';
+                el.recordId.value = '';
+                el.isFromCloud.value = 'false';
+                el.oldFolderName.value = '';
+                lockFieldsForAddMode();
+            } else if (state.appMode === 'edit' && existingData) {
+                el.modalTitle.innerText = '監造資料登錄 / 修改';
+                el.btnSubmitText.innerText = '儲存修改';
+                el.deleteBtnContainer.classList.remove('hidden');
+                populateForm(existingData);
+                // 儲存原始資料夾名稱供重新命名或刪除使用
+                el.oldFolderName.value = `${existingData.date.replace(/\//g, '')}_${existingData.item}`;
+            } else if (state.appMode === 'view' && existingData) {
                 el.modalTitle.innerText = '檢視查驗紀錄';
-                setupFormForViewOnly(existingData);
-            } else if (existingData && state.appMode === 'edit') {
-                el.modalTitle.innerText = '編輯查驗紀錄';
-                setupFormForEdit(existingData);
-            } else {
-                el.modalTitle.innerText = '廠商登錄查驗';
-                setupFormForAdd();
+                el.actionButtonsContainer.classList.add('hidden');
+                el.downloadButtonsContainer.classList.remove('hidden');
+                populateForm(existingData);
+                lockAllFields();
             }
             
-            renderPhotoPreviews();
-            updateConditionalSectionVisibility();
+            el.dataModal.classList.remove('hidden');
         }
 
-        function closeModal() {
-            state.isModalOpen = false;
-            state.modalData = null;
-            state.photosBase64 = [];
-            el.modalOverlay.classList.add('hidden');
-            el.modalOverlay.classList.remove('flex');
-        }
+        window.closeModal = function() {
+            el.dataModal.classList.add('hidden');
+        };
 
         function resetForm() {
+            el.form = document.getElementById('recordForm');
             el.form.reset();
             el.fieldA_custom_container.classList.add('hidden');
             el.editBadgeContainer.innerHTML = '';
+            el.photoPreviewContainer.innerHTML = '';
             
             Array.from(el.form.elements).forEach(inp => {
-                if(inp.id !== 'deleteSlider' && inp.id !== 'btnNow') {
+                if(inp.id !== 'btnNow') {
                     inp.disabled = false;
                     inp.classList.remove('bg-gray-100', 'cursor-not-allowed');
                 }
@@ -464,532 +427,513 @@
             el.deleteBtnContainer.classList.add('hidden');
         }
 
-        // 時間按鈕
-        el.btnNow.addEventListener('click', () => {
-            el.fieldB_custom.value = formatTime(new Date());
-        });
+        window.setNowTime = function() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            el.fieldB_time.value = `${h}:${m}`;
+        };
 
-        function setupFormForAdd() {
-            // Field A setup (Removed "Next Monday")
-            el.fieldA_type.innerHTML = `
-                <option value="tomorrow">明天 (${formatDate(getTomorrow())})</option>
-                <option value="custom">選擇日期 (不含今日)</option>
-                <option value="today">今天 (${formatDate(new Date())})</option>
-            `;
-            
-            const tomorrowStr = getTomorrow().toISOString().split('T')[0];
-            el.fieldA_custom.min = tomorrowStr;
-            el.btnSave.innerText = '完成上傳';
-        }
-
-        function setupFormForEdit(data) {
-            el.fieldA_type.innerHTML = `<option value="custom_edit">自訂日期</option>`;
-            el.fieldA_custom_container.classList.remove('hidden');
-            el.fieldA_custom.value = data.date.replace(/\//g, '-');
-            el.fieldA_custom.removeAttribute('min');
-
-            el.fieldB_custom.value = data.time || '';
-
-            el.fieldC.value = data.item || '';
-            el.fieldD.value = data.location || '';
-            el.fieldF.value = data.contractor || '';
-            el.fieldG.value = data.supervisor || '';
-
-            if (data.isEdited) {
-                el.editBadgeContainer.innerHTML = `<span class="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded border border-orange-300">已編輯</span>`;
-            }
-            if (data.isFromCloud) {
-                el.editBadgeContainer.innerHTML += `<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-300 ml-1">雲端資料</span>`;
-            }
-
-            el.btnSave.innerText = '儲存修改';
-            el.deleteBtnContainer.classList.remove('hidden');
-            
-            state.originalDataStr = JSON.stringify({
-                date: el.fieldA_custom.value, time: el.fieldB_custom.value, item: el.fieldC.value, location: el.fieldD.value, contractor: el.fieldF.value, supervisor: el.fieldG.value, photosCount: state.photosBase64.length
+        function lockFieldsForAddMode() {
+            const fieldsToLock = [el.fieldE_photo, el.fieldF_contractor, el.fieldG_inspector];
+            fieldsToLock.forEach(f => {
+                f.disabled = true;
+                f.classList.add('bg-gray-100', 'cursor-not-allowed');
             });
+            document.getElementById('photoReqStar').classList.add('hidden');
+            document.getElementById('contractorReqStar').classList.add('hidden');
+            document.getElementById('inspectorReqStar').classList.add('hidden');
+            
+            // Remove 'today' restriction on lock/unlock dynamically
         }
 
-        function setupFormForViewOnly(data) {
-            setupFormForEdit(data);
-            
-            Array.from(el.form.elements).forEach(inp => {
-                if (inp.id !== 'modalClose') {
-                    inp.disabled = true;
-                    inp.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-600');
-                }
+        function unlockFieldsForAddMode() {
+            const fieldsToLock = [el.fieldE_photo, el.fieldF_contractor, el.fieldG_inspector];
+            fieldsToLock.forEach(f => {
+                f.disabled = false;
+                f.classList.remove('bg-gray-100', 'cursor-not-allowed');
             });
-            el.btnNow.disabled = true;
-            
-            el.actionButtonsContainer.classList.add('hidden');
-            el.downloadButtonsContainer.classList.remove('hidden');
+            document.getElementById('photoReqStar').classList.remove('hidden');
+            document.getElementById('contractorReqStar').classList.remove('hidden');
+            document.getElementById('inspectorReqStar').classList.remove('hidden');
         }
 
-        el.fieldA_type.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
+        window.handleDateSelectChange = function() {
+            const val = el.fieldA_select.value;
+            const today = new Date();
+            let targetDate = new Date();
+            
+            if (val === 'tomorrow') {
+                targetDate.setDate(today.getDate() + 1);
+                el.fieldA_custom_container.classList.add('hidden');
+                el.fieldA_date.value = formatDateDash(targetDate);
+                if(state.appMode === 'add') lockFieldsForAddMode();
+            } else if (val === 'today') {
+                el.fieldA_custom_container.classList.add('hidden');
+                el.fieldA_date.value = formatDateDash(today);
+                if(state.appMode === 'add') unlockFieldsForAddMode();
+            } else if (val === 'custom') {
                 el.fieldA_custom_container.classList.remove('hidden');
-                el.fieldA_custom.required = true;
+                if(state.appMode === 'add') lockFieldsForAddMode();
+                el.fieldA_date.value = '';
             } else {
                 el.fieldA_custom_container.classList.add('hidden');
-                el.fieldA_custom.required = false;
+                el.fieldA_date.value = '';
+                if(state.appMode === 'add') lockFieldsForAddMode();
             }
-            updateConditionalSectionVisibility();
-        });
+        };
 
-        function updateConditionalSectionVisibility() {
-            if (state.appMode === 'add') {
-                const isToday = el.fieldA_type.value === 'today';
-                if (isToday) {
-                    el.conditionalSection.classList.remove('opacity-50', 'pointer-events-none');
-                    el.fieldE_input.required = true;
-                    el.fieldF.required = true;
-                    el.fieldG.required = true;
-                } else {
-                    el.conditionalSection.classList.add('opacity-50', 'pointer-events-none');
-                    el.fieldE_input.required = false;
-                    el.fieldF.required = false;
-                    el.fieldG.required = false;
-                    state.photosBase64 = [];
-                    el.fieldF.value = '';
-                    el.fieldG.value = '';
-                    renderPhotoPreviews();
-                }
-            } else {
-                el.conditionalSection.classList.remove('opacity-50', 'pointer-events-none');
+        window.handlePhotoUpload = function(event) {
+            const files = event.target.files;
+            if (files.length + currentPhotos.length > 4) {
+                alert('最多只能放置四張照片');
+                el.fieldE_photo.value = '';
+                return;
             }
-        }
 
-        // Photo Processing with Watermark
-        async function processPhotoWithWatermark(file, dateString) {
-            return new Promise((resolve) => {
+            Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024;
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                        canvas.width = width; canvas.height = height;
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        ctx.font = `bold ${Math.floor(height * 0.05)}px sans-serif`;
-                        ctx.fillStyle = 'rgba(255, 165, 0, 0.9)';
-                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-                        ctx.lineWidth = 2;
-                        ctx.textAlign = 'right';
-                        ctx.textBaseline = 'bottom';
-                        
-                        const textX = width - Math.floor(width * 0.02);
-                        const textY = height - Math.floor(height * 0.02);
-                        
-                        ctx.strokeText(dateString, textX, textY);
-                        ctx.fillText(dateString, textX, textY);
-                        resolve(canvas.toDataURL('image/jpeg', 0.8));
-                    };
-                    img.src = e.target.result;
+                    const base64Str = e.target.result;
+                    currentPhotos.push(base64Str);
+                    renderPhotoPreview();
                 };
                 reader.readAsDataURL(file);
             });
-        }
-
-        el.fieldE_input.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (state.photosBase64.length + files.length > 4) { alert('最多只能上傳 4 張照片！'); return; }
-
-            let watermarkDateStr = getResolvedDateString();
-
-            for (const file of files) {
-                if (!file.type.startsWith('image/')) continue;
-                try {
-                    const base64 = await processPhotoWithWatermark(file, watermarkDateStr);
-                    state.photosBase64.push(base64);
-                } catch (error) { console.error("處理照片錯誤:", error); }
-            }
-            e.target.value = ''; 
-            renderPhotoPreviews();
-        });
-
-        function renderPhotoPreviews() {
-            el.photoPreviewContainer.innerHTML = '';
-            
-            // 處理純雲端載入未附圖的顯示提示
-            if(state.modalData && state.modalData.isFromCloud && (!state.photosBase64 || state.photosBase64.length === 0)) {
-                 el.photoPreviewContainer.innerHTML = `<div class="col-span-2 text-sm text-gray-500 bg-gray-50 p-2 rounded text-center">此為雲端讀取資料，照片請至總覽或雲端資料夾檢視。</div>`;
-            }
-
-            state.photosBase64.forEach((base64, index) => {
-                const isViewOnly = state.appMode === 'overview';
-                el.photoPreviewContainer.innerHTML += `
-                    <div class="photo-preview-item shadow-sm">
-                        <img src="${base64}" class="photo-preview-img cursor-pointer" onclick="openFullPhoto('${base64}')">
-                        ${!isViewOnly ? `<div class="remove-photo-btn" onclick="removePhoto(${index})"><i class="fas fa-times"></i></div>` : ''}
-                    </div>
-                `;
-            });
-            
-            if (state.photosBase64.length >= 4) el.fieldE_input.parentElement.classList.add('hidden');
-            else if (state.appMode !== 'overview') el.fieldE_input.parentElement.classList.remove('hidden');
-        }
-
-        window.removePhoto = (index) => { state.photosBase64.splice(index, 1); renderPhotoPreviews(); };
-        window.openFullPhoto = (base64) => {
-            const w = window.open("");
-            w.document.write(`<img src="${base64}" style="max-width: 100%; max-height: 100vh; display: block; margin: 0 auto;">`);
         };
 
-        function getResolvedDateString() {
-            const type = el.fieldA_type.value;
-            if (type === 'tomorrow') return formatDate(getTomorrow());
-            if (type === 'today') return formatDate(new Date());
-            if (type === 'custom' || type === 'custom_edit') {
-                return el.fieldA_custom.value ? el.fieldA_custom.value.replace(/-/g, '/') : formatDate(new Date());
-            }
-            return formatDate(new Date());
+        function renderPhotoPreview() {
+            el.photoPreviewContainer.innerHTML = '';
+            const selectedDate = el.fieldA_date.value ? formatDateSlash(new Date(el.fieldA_date.value)) : formatDateSlash(new Date());
+
+            currentPhotos.forEach((photoSrc, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative border rounded-md overflow-hidden aspect-video bg-black flex items-center justify-center';
+                
+                const img = document.createElement('img');
+                img.src = photoSrc;
+                img.className = 'max-h-full max-w-full object-contain';
+                
+                const watermark = document.createElement('div');
+                watermark.className = 'absolute bottom-1 right-1 text-yellow-400 text-[10px] font-bold drop-shadow-md bg-black bg-opacity-30 px-1 rounded';
+                watermark.innerText = selectedDate;
+
+                div.appendChild(img);
+                div.appendChild(watermark);
+                
+                if (state.appMode !== 'view') {
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-80 hover:opacity-100';
+                    delBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    delBtn.onclick = () => {
+                        currentPhotos.splice(index, 1);
+                        renderPhotoPreview();
+                    };
+                    div.appendChild(delBtn);
+                }
+
+                el.photoPreviewContainer.appendChild(div);
+            });
         }
 
-        // Form Submit
-        el.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const dateStr = getResolvedDateString();
-            const timeStr = el.fieldB_custom.value;
-            const item = el.fieldC.value.trim();
-            const location = el.fieldD.value.trim();
-            const contractor = el.fieldF.value.trim();
-            const supervisor = el.fieldG.value.trim();
-
-            if ( (state.appMode === 'add' && el.fieldA_type.value === 'today') || 
-                 (state.appMode === 'edit' && (contractor || supervisor || state.photosBase64.length > 0)) ) {
-                // 如果是雲端載下來的資料，編輯時若不改圖可通融，若是新上傳務必有圖
-                if (state.photosBase64.length === 0 && !(state.modalData && state.modalData.isFromCloud)) {
-                    alert("請上傳至少一張查驗照片"); return;
-                }
-                if (!contractor) { alert("請填寫施工廠商"); return; }
-                if (!supervisor) { alert("請填寫現場查驗監造"); return; }
+        function populateForm(data) {
+            el.recordId.value = data.id;
+            el.isFromCloud.value = data.isFromCloud || false;
+            
+            // Set custom date select
+            el.fieldA_select.value = 'custom';
+            el.fieldA_custom_container.classList.remove('hidden');
+            el.fieldA_date.value = data.date ? data.date.replace(/\//g, '-') : '';
+            
+            el.fieldB_time.value = data.time || '';
+            el.fieldC_item.value = data.item || '';
+            el.fieldD_location.value = data.location || '';
+            el.fieldF_contractor.value = data.contractor || '';
+            el.fieldG_inspector.value = data.supervisor || '';
+            
+            if (data.photos && Array.isArray(data.photos)) {
+                data.photos.forEach(p => currentPhotos.push(p));
+                renderPhotoPreview();
             }
 
-            const payload = {
-                date: dateStr, time: timeStr, item, location, photos: state.photosBase64, contractor, supervisor, timestamp: Date.now()
+            if (data.isEdited && state.appMode === 'edit') {
+                el.editBadgeContainer.classList.remove('hidden');
+                el.editBadgeContainer.innerHTML = '<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">已編輯</span>';
+            }
+            
+            unlockFieldsForAddMode();
+        }
+
+        function lockAllFields() {
+            Array.from(el.form.elements).forEach(inp => {
+                inp.disabled = true;
+                inp.classList.add('bg-gray-50');
+            });
+            el.btnNow.disabled = true;
+        }
+
+        window.saveRecord = async function() {
+            // Validation
+            if (!el.fieldA_date.value) { alert('請選擇查驗日期'); return; }
+            if (!el.fieldB_time.value) { alert('請選擇查驗時間'); return; }
+            if (!el.fieldC_item.value.trim()) { alert('請填寫查驗項目'); return; }
+            
+            // Mode specific validation
+            if (!el.fieldF_contractor.disabled) {
+                if (currentPhotos.length === 0 && el.isFromCloud.value !== 'true') { alert('請上傳至少一張查驗照片'); return; }
+                if (!el.fieldF_contractor.value.trim()) { alert('請填寫施工廠商'); return; }
+                if (!el.fieldG_inspector.value.trim()) { alert('請填寫現場查驗監造'); return; }
+            }
+
+            const isEdit = !!el.recordId.value;
+            const newId = isEdit ? el.recordId.value : 'rec_' + Date.now();
+            const recordDate = formatDateSlash(new Date(el.fieldA_date.value));
+
+            const recordData = {
+                id: newId,
+                date: recordDate,
+                time: el.fieldB_time.value,
+                item: el.fieldC_item.value.trim(),
+                location: el.fieldD_location.value.trim(),
+                contractor: !el.fieldF_contractor.disabled ? el.fieldF_contractor.value.trim() : '',
+                supervisor: !el.fieldG_inspector.disabled ? el.fieldG_inspector.value.trim() : '',
+                photos: [...currentPhotos],
+                isEdited: isEdit,
+                isFromCloud: el.isFromCloud.value === 'true'
             };
 
+            // 1. Save to local first for immediate UI feedback
+            if (isEdit) {
+                const idx = records.findIndex(r => r.id === newId);
+                if (idx !== -1) records[idx] = recordData;
+            } else {
+                records.push(recordData);
+            }
+            saveRecordsToLocal();
+            renderCalendar();
+
+            // 2. Background sync to Google Drive via GAS
+            el.btnSubmit.disabled = true;
+            el.btnSubmitText.innerText = "雲端同步中...";
+            el.btnSubmitLoader.classList.remove('hidden');
+
             try {
-                el.btnSave.innerText = '處理中...';
-                el.btnSave.disabled = true;
+                const payload = {
+                    action: 'save',
+                    oldFolderName: el.oldFolderName.value, // 【需求6】傳送舊檔名供重新命名用
+                    date: recordData.date,
+                    time: recordData.time,
+                    item: recordData.item,
+                    location: recordData.location,
+                    contractor: recordData.contractor,
+                    inspector: recordData.supervisor,
+                    images: recordData.photos
+                };
 
-                let oldFolderName = null;
-
-                if (state.appMode === 'add') {
-                    payload.isEdited = false;
-                    payload.id = 'ID_' + Date.now();
-                    records.push(payload);
-                    saveData();
-                    renderCalendar();
-                } else if (state.appMode === 'edit' && state.modalData) {
-                    const currentDataStr = JSON.stringify({
-                        date: el.fieldA_custom.value, time: el.fieldB_custom.value, item, location, contractor, supervisor, photosCount: state.photosBase64.length
-                    });
-                    
-                    payload.isEdited = state.modalData.isEdited || (currentDataStr !== state.originalDataStr);
-                    payload.id = state.modalData.id;
-                    
-                    // 產生舊的資料夾名稱 (供雲端重新命名或刪除對比使用)
-                    if (state.modalData.date && state.modalData.item) {
-                        oldFolderName = state.modalData.date.replace(/\//g, '') + '_' + state.modalData.item;
-                    }
-                    
-                    const index = records.findIndex(r => r.id === payload.id);
-                    if (index !== -1) { records[index] = payload; saveData(); renderCalendar(); }
-                }
-
-                // 雲端同步上傳
-                try {
-                    el.btnSave.innerText = '雲端備份中...';
-                    const gasPayload = {
-                        action: 'save',
-                        oldFolderName: oldFolderName,
-                        date: payload.date, time: payload.time, item: payload.item, location: payload.location, contractor: payload.contractor, inspector: payload.supervisor, images: payload.photos
-                    };
-
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        redirect: 'follow',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(gasPayload)
-                    });
-                    
-                    const rawText = await response.text();
-                    try {
-                        const result = JSON.parse(rawText);
-                        if (result.status === 'success') console.log(`雲端上傳成功：${result.folderName}`);
-                        else alert(`雲端同步異常: ${result.message}\n(但本機已儲存)`);
-                    } catch (parseError) {
-                        throw new Error('伺服器回傳格式錯誤，請檢查權限設定。');
-                    }
-                } catch (uploadErr) {
-                    alert(`雲端同步失敗：\n${uploadErr.message}\n(※ 資料已安全儲存於本機)`);
-                }
-
-                closeModal();
-            } catch (error) {
-                alert("儲存失敗，請重試。");
-            } finally {
-                el.btnSave.innerText = '完成上傳';
-                el.btnSave.disabled = false;
-            }
-        });
-
-        // 刪除按鈕邏輯
-        el.btnDeleteRecord.addEventListener('click', async () => {
-            if (!state.modalData || !state.modalData.id) return;
-            
-            if (confirm('確定要刪除此筆紀錄嗎？\n(檔案將移至雲端「已刪除」資料夾)')) {
-                const originalDateStr = state.modalData.date.replace(/\//g, '');
-                const originalItem = state.modalData.item;
-                const oldFolderName = `${originalDateStr}_${originalItem}`;
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    redirect: 'follow', // 確保跟隨 GAS 的重新導向
+                    body: JSON.stringify(payload)
+                });
                 
-                const originalBtnText = el.btnDeleteRecord.innerHTML;
-                el.btnDeleteRecord.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 刪除中...';
-                el.btnDeleteRecord.disabled = true;
-
+                const responseText = await response.text();
+                let result;
                 try {
-                    const response = await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'delete', oldFolderName: oldFolderName })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.status === 'success') {
-                        records = records.filter(r => r.id !== state.modalData.id);
-                        saveData(); 
-                        renderCalendar(); 
-                        closeModal();
-                    } else {
-                        alert("雲端刪除失敗: " + result.message);
-                    }
-                } catch (error) {
-                    console.error(error);
-                    alert("連線失敗，請檢查網路狀態。");
-                } finally {
-                    el.btnDeleteRecord.innerHTML = originalBtnText;
-                    el.btnDeleteRecord.disabled = false;
+                    result = JSON.parse(responseText);
+                } catch(e) {
+                    console.error("Parse error, raw response:", responseText);
+                    throw new Error("無法解析伺服器回應");
                 }
+
+                if (result.status === 'success') {
+                    // Update local record to mark it as synced
+                    const idx = records.findIndex(r => r.id === newId);
+                    if (idx !== -1) {
+                        records[idx].isFromCloud = true;
+                        saveRecordsToLocal();
+                        renderCalendar();
+                    }
+                    closeModal();
+                } else {
+                    alert("雲端同步失敗：" + result.message);
+                }
+            } catch (error) {
+                console.error('Upload Error:', error);
+                alert("本機已儲存，但上傳雲端發生錯誤。請確認網路狀態與權限。");
+                closeModal(); // 允許使用者關閉視窗，因為本地已儲存
+            } finally {
+                el.btnSubmit.disabled = false;
+                el.btnSubmitText.innerText = state.appMode === 'add' ? "完成上傳" : "儲存修改";
+                el.btnSubmitLoader.classList.add('hidden');
             }
-        });
-
-        // Downloads
-        function generateFolderName(dateStr, itemStr) {
-            return `${dateStr.replace(/\//g, '')}_${itemStr.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}`;
-        }
-
-        el.btnDownloadRecord.addEventListener('click', () => {
-            if(!state.modalData) return;
-            const data = state.modalData;
-            const content = `查驗日期: ${data.date}\n查驗時間: ${data.time}\n查驗項目: ${data.item}\n查驗地點: ${data.location || '無'}\n施工廠商: ${data.contractor || '尚未填寫'}\n現場查驗監造: ${data.supervisor || '尚未填寫'}`;
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${generateFolderName(data.date, data.item)}_紀錄.txt`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-        });
-
-        el.btnDownloadPhotos.addEventListener('click', async () => {
-             if(!state.modalData || !state.modalData.photos || state.modalData.photos.length === 0) {
-                 alert("本機沒有可下載的照片，請至雲端資料夾檢視。"); return;
-             }
-             el.btnDownloadPhotos.innerText = '打包下載中...';
-             el.btnDownloadPhotos.disabled = true;
-             try {
-                 const zip = new JSZip();
-                 const folderName = generateFolderName(state.modalData.date, state.modalData.item);
-                 const imgFolder = zip.folder(folderName);
-                 state.modalData.photos.forEach((base64Str, index) => {
-                     const base64Data = base64Str.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
-                     imgFolder.file(`photo_${index + 1}.jpg`, base64Data, {base64: true});
-                 });
-                 const content = await zip.generateAsync({type:"blob"});
-                 const url = URL.createObjectURL(content);
-                 const a = document.createElement('a'); a.href = url; a.download = `${folderName}_照片.zip`;
-                 document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-             } finally {
-                 el.btnDownloadPhotos.innerHTML = '<i class="fas fa-images"></i> 下載照片';
-                 el.btnDownloadPhotos.disabled = false;
-             }
-        });
-
-        window.onload = async () => {
-            loadData(); // 先載入本機暫存，讓畫面不會空
-            await loadDataFromCloud(); // 背後拉取雲端資料覆蓋/補充
         };
 
-        // UI Listeners
-        el.menuBtn.addEventListener('click', toggleSidebar);
-        el.sidebarOverlay.addEventListener('click', toggleSidebar);
-        el.modalClose.addEventListener('click', closeModal);
-        el.modalOverlay.addEventListener('click', (e) => { if (e.target === el.modalOverlay) closeModal(); });
-        
-        document.getElementById('prevBtn').addEventListener('click', () => changeDateOffset(-1));
-        document.getElementById('nextBtn').addEventListener('click', () => changeDateOffset(1));
-        
-        el.btnViewMonth.addEventListener('click', () => switchView('month'));
-        el.btnViewWeek.addEventListener('click', () => switchView('week'));
-        
-        document.getElementById('menuBtnAdd').addEventListener('click', () => setAppMode('add', '廠商登錄查驗'));
-        document.getElementById('menuBtnEdit').addEventListener('click', () => setAppMode('edit', '監造資料登錄 / 修改'));
-        document.getElementById('menuBtnOverview').addEventListener('click', () => setAppMode('overview', '紀錄總覽 (檢視/下載)'));
+        window.deleteRecord = async function() {
+            // 【需求5】改用按鈕防呆確認
+            if(!confirm("確定要刪除這筆紀錄嗎？\n資料將會被移至雲端的「已刪除」資料夾。")) {
+                return;
+            }
 
-    </script>
-</head>
-<body class="h-screen flex flex-col overflow-hidden text-gray-800">
+            const id = el.recordId.value;
+            const oldName = el.oldFolderName.value;
 
-    <header id="mainHeader" class="bg-blue-600 transition-colors duration-300 text-white flex items-center justify-between px-4 py-3 shadow-md z-20 relative">
-        <div class="flex items-center gap-4">
-            <button id="menuBtn" class="text-white hover:bg-black/10 p-2 rounded-full transition focus:outline-none">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-            <div class="flex flex-col">
-                <h1 class="font-bold text-xl leading-tight">查驗紀錄站</h1>
-                <span id="modeIndicator" class="text-xs text-white/80 hidden bg-black/20 px-2 py-0.5 rounded-full inline-block mt-0.5">目前模式: 檢視</span>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <!-- 視圖切換 (月/週) -->
-            <div class="flex bg-black/20 rounded-lg p-1 mr-1 text-sm shadow-inner">
-                <button id="btnViewMonth" class="px-3 py-1 rounded bg-white text-gray-800 font-bold shadow-sm transition">月</button>
-                <button id="btnViewWeek" class="px-3 py-1 rounded text-white hover:bg-white/20 transition">週</button>
-            </div>
+            // 1. Local delete
+            records = records.filter(r => r.id !== id);
+            saveRecordsToLocal();
+            renderCalendar();
+            closeModal();
+
+            // 2. Cloud delete (Move to Trash)
+            if (oldName) {
+                try {
+                    const payload = { action: 'delete', oldFolderName: oldName };
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify(payload)
+                    });
+                    // Fire and forget, local UI is already updated
+                } catch(e) {
+                    console.warn("⚠️ 刪除同步失敗 (預覽環境限制):", e);
+                }
+            }
+        };
+
+        window.downloadPhotos = function() {
+            if (currentPhotos.length === 0) {
+                alert('沒有照片可以下載。');
+                return;
+            }
             
-            <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg">
-                <button id="prevBtn" class="hover:text-gray-200 p-1"><i class="fas fa-chevron-left"></i></button>
-                <span id="currentMonthLabel" class="font-bold min-w-[90px] text-center text-sm">YYYY年 M月</span>
-                <button id="nextBtn" class="hover:text-gray-200 p-1"><i class="fas fa-chevron-right"></i></button>
-            </div>
-        </div>
-    </header>
-
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden transition-opacity"></div>
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-40 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-        <div class="bg-gray-50 p-6 border-b flex items-center gap-3">
-            <div class="w-10 h-10 bg-gray-800 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-sm">查</div>
-            <div>
-                <h2 class="font-bold text-gray-800 text-lg">查驗紀錄站</h2>
-                <p class="text-xs text-gray-500">工程管理系統</p>
-            </div>
-        </div>
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <button id="menuBtnAdd" class="w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition flex items-center gap-3 border border-transparent hover:border-blue-100">
-                <div class="bg-blue-100 text-blue-600 p-2 rounded-md"><i class="fas fa-plus-circle w-4 text-center"></i></div>
-                <div><div class="font-semibold">廠商登錄查驗</div><div class="text-xs text-gray-400 mt-0.5">建議於查驗一天前登錄</div></div>
-            </button>
-            <button id="menuBtnEdit" class="w-full text-left px-4 py-3 rounded-lg hover:bg-orange-50 text-gray-700 hover:text-orange-700 transition flex items-center gap-3 border border-transparent hover:border-orange-100">
-                <div class="bg-orange-100 text-orange-600 p-2 rounded-md"><i class="fas fa-edit w-4 text-center"></i></div>
-                <div><div class="font-semibold">監造查驗資料登錄</div><div class="text-xs text-gray-400 mt-0.5">或 廠商修改資料</div></div>
-            </button>
-            <button id="menuBtnOverview" class="w-full text-left px-4 py-3 rounded-lg hover:bg-green-50 text-gray-700 hover:text-green-700 transition flex items-center gap-3 border border-transparent hover:border-green-100">
-                <div class="bg-green-100 text-green-600 p-2 rounded-md"><i class="fas fa-list-alt w-4 text-center"></i></div>
-                <div><div class="font-semibold">查驗紀錄總覽</div><div class="text-xs text-gray-400 mt-0.5">檢視與下載資料</div></div>
-            </button>
-        </nav>
-        <div class="p-4 border-t text-xs text-gray-400 text-center relative">
-            <span id="cloudSyncStatus" class="hidden absolute -top-8 left-0 right-0 text-center bg-black/70 text-white rounded-full mx-4 py-1.5 backdrop-blur shadow"><i class="fas fa-sync fa-spin"></i> 同步中...</span>
-            資料自動儲存與同步於雲端
-        </div>
-    </div>
-
-    <!-- 動態產生月檢視或週檢視的容器 -->
-    <main id="calendarContainer" class="flex-1 flex flex-col bg-white overflow-hidden relative"></main>
-
-    <div id="modalOverlay" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden relative border border-gray-100">
+            const zip = new JSZip();
+            const dateStr = el.fieldA_date.value.replace(/-/g, '');
+            const folderName = `${dateStr}_${el.fieldC_item.value}`;
             
-            <div class="px-5 py-4 border-b flex justify-between items-center bg-gray-50/50">
-                <div class="flex items-center gap-2">
-                    <h3 id="modalTitle" class="text-lg font-bold text-gray-800">登錄查驗</h3>
-                    <div id="editBadgeContainer"></div>
-                </div>
-                <button id="modalClose" class="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-full transition w-8 h-8 flex items-center justify-center focus:outline-none"><i class="fas fa-times"></i></button>
-            </div>
+            currentPhotos.forEach((base64, index) => {
+                const base64Data = base64.split(',')[1];
+                zip.file(`照片_${index+1}.jpg`, base64Data, {base64: true});
+            });
+
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${folderName}_照片.zip`;
+                link.click();
+            });
+        };
+
+        window.downloadRecordText = function() {
+            const dateStr = el.fieldA_date.value.replace(/-/g, '');
+            const folderName = `${dateStr}_${el.fieldC_item.value}`;
             
-            <div class="p-5 overflow-y-auto flex-1 no-scrollbar space-y-5">
-                <form id="inspectionForm" class="space-y-4">
+            const textContent = `【查驗日期】: ${el.fieldA_date.value.replace(/-/g, '/')}\n` +
+                                `【查驗時間】: ${el.fieldB_time.value}\n` +
+                                `【查驗項目】: ${el.fieldC_item.value}\n` +
+                                `【查驗地點】: ${el.fieldD_location.value}\n` +
+                                `【施工廠商】: ${el.fieldF_contractor.value}\n` +
+                                `【查驗監造】: ${el.fieldG_inspector.value}\n`;
+            
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${folderName}_紀錄.txt`;
+            link.click();
+        };
+
+        function renderCalendar() {
+            if (state.viewMode === 'month') {
+                renderMonthView();
+            } else {
+                renderWeekView();
+            }
+        }
+
+        function renderMonthView() {
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+            el.currentMonthLabel.innerText = `${year}年 ${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - startDate.getDay());
+            
+            const endDate = new Date(lastDay);
+            if (endDate.getDay() !== 6) {
+                endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+            }
+
+            const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+            
+            // 加入 overflow-x-auto 讓手機版格線固定不擠壓
+            let html = `<div class="flex-1 overflow-x-auto no-scrollbar"><div class="min-w-[700px] h-full flex flex-col">`;
+            
+            // Header
+            html += `<div class="grid grid-cols-7 gap-[1px] bg-gray-200 text-center text-sm font-semibold text-gray-600 py-2">`;
+            dayNames.forEach(d => html += `<div>${d}</div>`);
+            html += `</div>`;
+
+            // Body
+            html += `<div class="calendar-grid flex-1">`;
+            
+            let curr = new Date(startDate);
+            const todayStr = new Date().toDateString();
+
+            while (curr <= endDate) {
+                const isOtherMonth = curr.getMonth() !== month;
+                const isToday = curr.toDateString() === todayStr;
+                html += generateCellHtml(new Date(curr), isOtherMonth, isToday);
+                curr.setDate(curr.getDate() + 1);
+            }
+            
+            html += `</div></div></div>`;
+            el.calendarContainer.innerHTML = html;
+        }
+
+        function renderWeekView() {
+            const startOfWeek = getStartOfWeek(state.currentDate);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            
+            const formatShortDate = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+            el.currentMonthLabel.innerText = `${formatShortDate(startOfWeek)} - ${formatShortDate(endOfWeek)}`;
+
+            const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+            
+            // 【需求3】加寬 min-w-[1000px] 讓手機可左右滑動且格線寬大
+            let html = `<div class="flex-1 overflow-x-auto no-scrollbar relative w-full"><div class="min-w-[1000px] flex flex-col min-h-full">`;
+            
+            // Header
+            html += `<div class="week-header-grid text-sm font-semibold text-gray-600 text-center py-2 sticky top-0 z-20 shadow-sm bg-gray-50 border-b border-gray-300">
+                <div class="bg-gray-50 flex items-center justify-center">時間</div>`;
+            for(let i=0; i<7; i++) {
+                const d = new Date(startOfWeek);
+                d.setDate(d.getDate() + i);
+                const isToday = d.toDateString() === new Date().toDateString();
+                html += `<div class="bg-gray-50 flex flex-col items-center justify-center ${isToday ? 'text-blue-600 font-bold' : ''}">
+                    <span>${dayNames[i]}</span>
+                    <span class="text-xs">(${formatShortDate(d)})</span>
+                </div>`;
+            }
+            html += `</div>`;
+
+            // Body
+            html += `<div class="week-body-grid flex-1 relative">`;
+            
+            // Create time axis
+            html += `<div class="flex flex-col bg-white border-r border-gray-200">`;
+            for(let h=0; h<24; h++) {
+                html += `<div class="time-axis-cell">${String(h).padStart(2,'0')}:00</div>`;
+            }
+            html += `</div>`;
+
+            // Create 7 columns for days
+            for(let i=0; i<7; i++) {
+                const d = new Date(startOfWeek);
+                d.setDate(d.getDate() + i);
+                const dateStr = formatDate(d);
+                const dayEvents = records.filter(r => r.date === dateStr);
+                
+                html += `<div class="week-day-col border-r border-gray-100">`;
+                
+                // Render 24 empty slots for visual grid
+                for(let h=0; h<24; h++) {
+                    html += `<div class="hour-slot"></div>`;
+                }
+                
+                // 【需求3】碰撞偵測與寬度均分演算法
+                const timeGroups = {};
+                dayEvents.forEach(ev => {
+                    // 取小時作為分組依據 (粗略碰撞)
+                    const hourPrefix = ev.time.split(':')[0]; 
+                    if (!timeGroups[hourPrefix]) timeGroups[hourPrefix] = [];
+                    timeGroups[hourPrefix].push(ev);
+                });
+
+                Object.keys(timeGroups).forEach(hourKey => {
+                    const group = timeGroups[hourKey];
+                    const count = group.length; // 該時段有幾個重疊行程
                     
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">A. 查驗日期 <span class="text-red-500">*</span></label>
-                        <select id="fieldA_type" class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500 bg-white" required></select>
-                        <div id="fieldA_custom_container" class="mt-2 hidden">
-                            <input type="date" id="fieldA_custom" class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">B. 查驗時間 <span class="text-red-500">*</span></label>
-                        <div class="flex gap-2">
-                            <input type="time" id="fieldB_custom" class="flex-1 border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500" required>
-                            <button type="button" id="btnNow" class="whitespace-nowrap px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-semibold transition focus:outline-none"><i class="far fa-clock mr-1"></i>現在時間</button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">C. 查驗項目 <span class="text-red-500">*</span></label>
-                        <input type="text" id="fieldC" placeholder="例如: 鋼筋綁紮、混凝土澆置..." class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500" required>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">D. 查驗地點 <span class="text-gray-400 font-normal text-xs">(選填)</span></label>
-                        <input type="text" id="fieldD" placeholder="例如: A棟 2F 柱..." class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <hr class="border-gray-200">
-
-                    <div id="conditionalSection" class="space-y-4 opacity-50 pointer-events-none transition-opacity duration-300 bg-gray-50/50 -mx-5 px-5 py-3 border-y border-gray-100">
-                        <div class="text-xs text-gray-500 font-medium mb-2 flex items-center gap-1"><i class="fas fa-info-circle"></i> 當日查驗或編輯模式需填寫以下資料</div>
+                    group.forEach((ev, idx) => {
+                        const timeParts = ev.time.split(':');
+                        let topOffset = 0;
+                        if(timeParts.length === 2 && !isNaN(timeParts[0])) {
+                            const hours = parseInt(timeParts[0]);
+                            const mins = parseInt(timeParts[1]);
+                            topOffset = (hours * 60) + mins;
+                        }
                         
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">E. 查驗照片 <span class="text-red-500">*</span> <span class="text-xs font-normal text-gray-500">(最多 4 張，自動壓日期)</span></label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition cursor-pointer relative bg-white">
-                                <i class="fas fa-camera text-2xl text-gray-400 mb-2"></i>
-                                <div class="text-sm text-gray-600 font-medium">點擊拍照或上傳照片</div>
-                                <input type="file" id="fieldE_input" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
+                        const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
+                        
+                        // 計算並排寬度 (留一點 margin 避免黏死)
+                        const widthPct = 100 / count;
+                        const leftPct = idx * widthPct;
+                        
+                        html += `
+                            <div class="event-badge ${badgeClass} shadow-md absolute z-10 p-1 border border-white" 
+                                 style="top: ${topOffset}px; left: calc(${leftPct}%); width: calc(${widthPct}% - 2px);" 
+                                 onclick="handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
+                                <div class="font-bold text-[10px] leading-tight">${ev.time}</div>
+                                <div class="truncate text-xs font-semibold leading-tight mt-0.5">${ev.item}</div>
+                                <div class="truncate text-[10px] opacity-80 leading-tight mt-0.5">${ev.contractor || ''}</div>
                             </div>
-                            <div id="photoPreviewContainer" class="photo-preview-grid mt-3"></div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">F. 施工廠商 (姓名) <span class="text-red-500">*</span></label>
-                            <input type="text" id="fieldF" placeholder="請輸入廠商代表姓名" class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500 bg-white">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">G. 現場查驗監造 (姓名) <span class="text-red-500">*</span></label>
-                            <input type="text" id="fieldG" placeholder="請輸入監造人員姓名" class="w-full border-gray-300 rounded-lg shadow-sm p-2.5 border focus:ring-blue-500 focus:border-blue-500 bg-white">
-                        </div>
-                    </div>
-                </form>
-            </div>
+                        `;
+                    });
+                });
+                
+                html += `</div>`;
+            }
             
-            <div class="px-5 py-4 border-t bg-gray-50/80 backdrop-blur-sm">
-                <div id="actionButtonsContainer" class="space-y-3">
-                    <button type="submit" form="inspectionForm" id="btnSave" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition focus:ring-4 focus:ring-gray-300">完成上傳</button>
-                    <div id="deleteBtnContainer" class="hidden pt-2 border-t border-gray-200">
-                        <button type="button" id="btnDeleteRecord" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded-lg shadow-sm border border-red-200 transition focus:ring-4 focus:ring-red-100 flex items-center justify-center gap-2">
-                            <i class="fas fa-trash-alt"></i> 刪除紀錄
-                        </button>
-                    </div>
-                </div>
+            html += `</div></div></div>`;
+            el.calendarContainer.innerHTML = html;
+        }
 
-                <div id="downloadButtonsContainer" class="hidden grid grid-cols-2 gap-3">
-                    <button id="btnDownloadRecord" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-semibold py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2"><i class="fas fa-file-alt text-gray-500"></i> 下載紀錄</button>
-                    <button id="btnDownloadPhotos" class="w-full bg-gray-100 border border-gray-200 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg shadow-sm transition flex items-center justify-center gap-2"><i class="fas fa-images"></i> 下載照片</button>
-                </div>
-            </div>
+        function generateCellHtml(cellDate, isOtherMonth, isToday = false) {
+            const dateStr = formatDate(cellDate);
+            const dayEvents = records.filter(r => r.date === dateStr);
+            
+            // Sort by time
+            dayEvents.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            
+            let classes = "calendar-cell flex flex-col";
+            if(isOtherMonth) classes += " other-month";
+            if(isToday) classes += " today";
 
-        </div>
-    </div>
+            let html = `<div class="${classes}" onclick="if('${state.appMode}' === 'add') { openModal(); document.getElementById('fieldA_select').value='custom'; document.getElementById('fieldA_custom_container').classList.remove('hidden'); document.getElementById('fieldA_date').value='${formatDateDash(cellDate)}'; }">
+                <div class="text-right text-sm font-semibold mb-1 ${isToday ? 'text-blue-600' : ''}">${cellDate.getDate()}</div>
+                <div class="flex-1 space-y-1 overflow-y-auto no-scrollbar">`;
+            
+            dayEvents.forEach(ev => {
+                const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
+                // 雲端資料綠色，完整填寫藍色，草稿灰色
+                const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
+                
+                html += `<div class="event-badge ${badgeClass}" onclick="handleEventClick(event, '${ev.id}')" title="${ev.item}">
+                    <span class="font-bold">${ev.time}</span> ${ev.item} ${ev.isEdited ? '<span class="text-orange-500 font-bold">(編)</span>' : ''}
+                </div>`;
+            });
+            
+            html += `</div></div>`;
+            return html;
+        }
 
+        function formatDate(d) {
+            return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function formatDateSlash(d) {
+            return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function formatDateDash(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
+        }
+    </script>
 </body>
 </html>
