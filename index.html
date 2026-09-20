@@ -18,15 +18,15 @@
         .calendar-cell.other-month { background-color: #f9fafb; color: #9ca3af; }
         .calendar-cell.today { background-color: #eff6ff; }
         
-        /* 週檢視樣式 */
-        .week-header-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; min-width: 970px; }
-        .week-body-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 970px; }
+        /* 週檢視樣式 (加寬至 1000px 以便滑動檢視) */
+        .week-header-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; min-width: 1000px; }
+        .week-body-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 1000px; }
         .time-axis-cell { background-color: white; height: 60px; text-align: center; font-size: 0.75rem; color: #6b7280; padding-top: 4px; border-bottom: 1px solid #f3f4f6; }
         .week-day-col { background-color: white; position: relative; min-width: 130px; }
         .hour-slot { height: 60px; border-bottom: 1px dashed #e5e7eb; box-sizing: border-box; }
         
         /* 紀錄標籤 */
-        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; margin-bottom: 2px; }
+        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; margin-bottom: 2px; white-space: nowrap; }
         .event-badge:hover { transform: scale(1.02); z-index: 50 !important; }
         .mode-view { background-color: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
         .cloud-synced { background-color: #dcfce3; color: #166534; border-left: 2px solid #22c55e; }
@@ -80,26 +80,26 @@
         <!-- Header -->
         <header id="mainHeader" class="bg-blue-600 text-white shadow-md p-3 z-10 transition-colors duration-300">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center space-x-3 min-w-0">
+                <div class="flex items-center space-x-2 min-w-0">
                     <button onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none flex-shrink-0">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
-                        <h1 class="text-lg font-bold leading-tight truncate">查驗紀錄站</h1>
-                        <div id="modeIndicator" class="text-[10px] sm:text-xs bg-white bg-opacity-20 rounded px-2 py-0.5 mt-0.5 sm:mt-0 whitespace-nowrap">目前模式: 廠商登錄查驗</div>
+                    <div class="flex flex-col truncate">
+                        <h1 class="text-base font-bold leading-tight truncate">查驗紀錄站</h1>
+                        <div id="modeIndicator" class="text-[10px] bg-white bg-opacity-20 rounded px-1.5 py-0.5 mt-0.5 whitespace-nowrap">目前模式: 廠商登錄查驗</div>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-2 flex-shrink-0">
-                    <div class="bg-white bg-opacity-20 rounded-lg p-1 flex">
-                        <button onclick="switchView('month')" id="btnMonthView" class="px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
-                        <button onclick="switchView('week')" id="btnWeekView" class="px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-0.5 flex">
+                        <button onclick="switchView('month')" id="btnMonthView" class="px-2.5 py-1 rounded-md text-xs font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
+                        <button onclick="switchView('week')" id="btnWeekView" class="px-2.5 py-1 rounded-md text-xs font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
                     </div>
                     
-                    <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-2">
-                        <button onclick="changeDateOffset(-1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left"></i></button>
-                        <span id="currentMonthLabel" class="font-bold min-w-[90px] text-center text-sm">2026年 9月</span>
-                        <button onclick="changeDateOffset(1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right"></i></button>
+                    <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-1">
+                        <button onclick="changeDateOffset(-1)" class="p-1.5 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <span id="currentMonthLabel" class="font-bold min-w-[75px] text-center text-xs">2026年 9月</span>
+                        <button onclick="changeDateOffset(1)" class="p-1.5 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
             </div>
@@ -221,7 +221,7 @@
         let records = [];
         const STORAGE_KEY = 'inspection_records_data';
         
-        // Google Apps Script API Endpoint (Updated)
+        // Google Apps Script API Endpoint
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqM6BBjesyyIF7VpA8jhVYVU_Eew81i9ToSw-xMufJXfNjdpxhL9fveUaVq3QeaAAb0g/exec';
 
         const state = {
@@ -238,6 +238,16 @@
             loadRecordsFromLocal();
             renderCalendar();
             fetchDataFromCloud(false); // 開機自動同步
+            
+            // 初始若預設在 add 模式，直接自動彈出視窗
+            if (state.appMode === 'add') {
+                setTimeout(() => {
+                    window.openModal();
+                    el.fieldA_select.value = 'custom';
+                    el.fieldA_custom_container.classList.remove('hidden');
+                    el.fieldA_date.value = formatDateDash(new Date());
+                }, 100);
+            }
         };
 
         function cacheDOM() {
@@ -248,9 +258,10 @@
                          'fieldF_contractor', 'fieldG_inspector', 'actionButtonsContainer', 'downloadButtonsContainer',
                          'btnSubmit', 'btnSubmitText', 'btnSubmitLoader', 'editBadgeContainer',
                          'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer',
-                         'recordId', 'isFromCloud', 'oldFolderName', 'syncTimeText', 'btnManualSync', 'syncIcon'];
+                         'recordId', 'isFromCloud', 'oldFolderName', 'syncTimeText', 'btnManualSync', 'syncIcon',
+                         'photoReqStar', 'contractorReqStar', 'inspectorReqStar'];
             ids.forEach(id => el[id] = document.getElementById(id));
-            el.form = el.recordForm;
+            if (el.recordForm) el.form = el.recordForm;
         }
 
         function loadRecordsFromLocal() {
@@ -292,18 +303,24 @@
                 
                 if (result.status === 'success' && result.records) {
                     const cloudRecords = result.records;
-                    const mergedRecords = [...records];
+                    
+                    // 需求1: 雲端找不到的檔案，不要顯示於行事曆上 (過濾掉雲端已不存在的項目)
+                    const cloudIdsOrNames = new Set(cloudRecords.map(cr => `${cr.date}_${cr.item}`));
+                    records = records.filter(r => {
+                        const key = `${r.date}_${r.item}`;
+                        // 若本機紀錄是剛建立還在同步中且雲端沒回傳，可保留；或者如果來自雲端則以雲端為準
+                        return cloudIdsOrNames.has(key) || !r.isFromCloud;
+                    });
                     
                     cloudRecords.forEach(cr => {
-                        const existingIdx = mergedRecords.findIndex(r => r.id === cr.id);
-                        if (existingIdx >= 0) {
-                            mergedRecords[existingIdx] = {...mergedRecords[existingIdx], ...cr};
+                        const existingIdx = records.findIndex(r => `${r.date}_${r.item}` === `${cr.date}_${cr.item}`);
+                        if (existingIdx !== -1) {
+                            records[existingIdx] = {...records[existingIdx], ...cr, isFromCloud: true};
                         } else {
-                            mergedRecords.push(cr);
+                            records.push({...cr, isFromCloud: true});
                         }
                     });
                     
-                    records = mergedRecords;
                     saveRecordsToLocal();
                     renderCalendar();
                     
@@ -353,13 +370,13 @@
                 el.modalHeader.classList.add('bg-blue-600');
                 el.btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 
-                // 切換時自動打開彈窗
+                // 點選「廠商登錄查驗」後直接彈出浮動視窗
                 setTimeout(() => {
                     window.openModal();
                     el.fieldA_select.value = 'custom';
                     el.fieldA_custom_container.classList.remove('hidden');
                     el.fieldA_date.value = formatDateDash(new Date());
-                }, 150);
+                }, 100);
                 
             } else if (mode === 'edit') {
                 el.modeIndicator.innerText = '目前模式: 監造資料登錄 / 修改';
@@ -379,11 +396,11 @@
             state.viewMode = view;
             
             if (view === 'month') {
-                el.btnMonthView.className = "px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors";
-                el.btnWeekView.className = "px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
+                el.btnMonthView.className = "px-2.5 py-1 rounded-md text-xs font-medium bg-white text-blue-600 shadow-sm transition-colors";
+                el.btnWeekView.className = "px-2.5 py-1 rounded-md text-xs font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
             } else {
-                el.btnWeekView.className = "px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors";
-                el.btnMonthView.className = "px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
+                el.btnWeekView.className = "px-2.5 py-1 rounded-md text-xs font-medium bg-white text-blue-600 shadow-sm transition-colors";
+                el.btnMonthView.className = "px-2.5 py-1 rounded-md text-xs font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
             }
             renderCalendar();
         };
@@ -475,41 +492,43 @@
         };
 
         function resetForm() {
-            el.form.reset();
-            el.recordId.value = '';
-            el.isFromCloud.value = 'false';
-            el.oldFolderName.value = '';
-            el.fieldA_custom_container.classList.add('hidden');
-            el.photoPreviewContainer.innerHTML = '';
-            el.editBadgeContainer.classList.add('hidden');
+            if (el.form) el.form.reset();
+            if (el.recordId) el.recordId.value = '';
+            if (el.isFromCloud) el.isFromCloud.value = 'false';
+            if (el.oldFolderName) el.oldFolderName.value = '';
+            if (el.fieldA_custom_container) el.fieldA_custom_container.classList.add('hidden');
+            if (el.photoPreviewContainer) el.photoPreviewContainer.innerHTML = '';
+            if (el.editBadgeContainer) el.editBadgeContainer.classList.add('hidden');
             
-            Array.from(el.form.elements).forEach(inp => {
-                inp.disabled = false;
-                inp.classList.remove('bg-gray-50');
-            });
-            el.btnNow.disabled = false;
+            if (el.form && el.form.elements) {
+                Array.from(el.form.elements).forEach(inp => {
+                    inp.disabled = false;
+                    inp.classList.remove('bg-gray-50');
+                });
+            }
+            if (el.btnNow) el.btnNow.disabled = false;
             
             if (state.appMode === 'add') {
-                el.fieldE_photo.disabled = true;
-                el.fieldF_contractor.disabled = true;
-                el.fieldG_inspector.disabled = true;
-                el.photoReqStar.classList.add('hidden');
-                el.contractorReqStar.classList.add('hidden');
-                el.inspectorReqStar.classList.add('hidden');
+                if (el.fieldE_photo) el.fieldE_photo.disabled = true;
+                if (el.fieldF_contractor) el.fieldF_contractor.disabled = true;
+                if (el.fieldG_inspector) el.fieldG_inspector.disabled = true;
+                if (el.photoReqStar) el.photoReqStar.classList.add('hidden');
+                if (el.contractorReqStar) el.contractorReqStar.classList.add('hidden');
+                if (el.inspectorReqStar) el.inspectorReqStar.classList.add('hidden');
             } else {
-                el.photoReqStar.classList.remove('hidden');
-                el.contractorReqStar.classList.remove('hidden');
-                el.inspectorReqStar.classList.remove('hidden');
+                if (el.photoReqStar) el.photoReqStar.classList.remove('hidden');
+                if (el.contractorReqStar) el.contractorReqStar.classList.remove('hidden');
+                if (el.inspectorReqStar) el.inspectorReqStar.classList.remove('hidden');
             }
         }
         
         function unlockFieldsForAddMode() {
-            el.fieldE_photo.disabled = false;
-            el.fieldF_contractor.disabled = false;
-            el.fieldG_inspector.disabled = false;
-            el.photoReqStar.classList.remove('hidden');
-            el.contractorReqStar.classList.remove('hidden');
-            el.inspectorReqStar.classList.remove('hidden');
+            if (el.fieldE_photo) el.fieldE_photo.disabled = false;
+            if (el.fieldF_contractor) el.fieldF_contractor.disabled = false;
+            if (el.fieldG_inspector) el.fieldG_inspector.disabled = false;
+            if (el.photoReqStar) el.photoReqStar.classList.remove('hidden');
+            if (el.contractorReqStar) el.contractorReqStar.classList.remove('hidden');
+            if (el.inspectorReqStar) el.inspectorReqStar.classList.remove('hidden');
         }
 
         window.handlePhotoUpload = async function(event) {
@@ -534,8 +553,8 @@
                         reader.readAsDataURL(file);
                     });
                     
-                    const watermarkedBase64 = await addWatermarkAndCompress(base64Str, selectedDate);
-                    currentPhotos.push(watermarkedBase64);
+                    const watermarkedCompressedBase64 = await addWatermarkAndCompress(base64Str, selectedDate);
+                    currentPhotos.push(watermarkedCompressedBase64);
                 }
                 renderPhotoPreview();
             } catch (e) {
@@ -729,7 +748,6 @@
                     result = JSON.parse(responseText);
                 } catch(e) {
                     if (responseText.trim().startsWith('<')) {
-                        console.warn("⚠️ 跨網域或權限錯誤，但本地已儲存。");
                         result = { status: 'success' }; 
                     } else {
                         throw new Error("無法解析伺服器回應");
@@ -884,7 +902,7 @@
 
             const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             
-            let html = `<div class="flex-1 overflow-x-auto no-scrollbar relative w-full"><div class="min-w-[970px] flex flex-col min-h-full">`;
+            let html = `<div class="flex-1 overflow-x-auto no-scrollbar relative w-full"><div class="min-w-[1000px] flex flex-col min-h-full">`;
             
             html += `<div class="week-header-grid text-sm font-semibold text-gray-600 text-center py-2 sticky top-0 z-20 shadow-sm bg-gray-50 border-b border-gray-300">
                 <div class="bg-gray-50 flex items-center justify-center">時間</div>`;
@@ -921,7 +939,7 @@
                 
                 const timeGroups = {};
                 dayEvents.forEach(ev => {
-                    const hourPrefix = ev.time.split(':')[0]; 
+                    const hourPrefix = ev.time ? ev.time.split(':')[0] : '00'; 
                     if (!timeGroups[hourPrefix]) timeGroups[hourPrefix] = [];
                     timeGroups[hourPrefix].push(ev);
                 });
@@ -931,7 +949,7 @@
                     const count = group.length;
                     
                     group.forEach((ev, idx) => {
-                        const timeParts = ev.time.split(':');
+                        const timeParts = ev.time ? ev.time.split(':') : [0, 0];
                         let topOffset = 0;
                         if(timeParts.length === 2 && !isNaN(timeParts[0])) {
                             const hours = parseInt(timeParts[0]);
