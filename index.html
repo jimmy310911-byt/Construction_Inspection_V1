@@ -241,7 +241,8 @@
                          'fieldC_item', 'fieldD_location', 'fieldE_photo', 'photoPreviewContainer',
                          'fieldF_contractor', 'fieldG_inspector', 'actionButtonsContainer', 'downloadButtonsContainer',
                          'btnSubmit', 'btnSubmitText', 'btnSubmitLoader', 'editBadgeContainer',
-                         'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer'];
+                         'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer',
+                         'recordId', 'isFromCloud', 'oldFolderName'];
             ids.forEach(id => el[id] = document.getElementById(id));
         }
 
@@ -371,10 +372,10 @@
             }
             
             const record = records.find(r => r.id === id);
-            if (record) openModal(record);
+            if (record) window.openModal(record);
         };
 
-        function openModal(existingData = null) {
+        window.openModal = function(existingData = null) {
             resetForm();
             currentPhotos.length = 0;
             
@@ -901,7 +902,7 @@
             if(isOtherMonth) classes += " other-month";
             if(isToday) classes += " today";
 
-            let html = `<div class="${classes}" onclick="if('${state.appMode}' === 'add') { openModal(); document.getElementById('fieldA_select').value='custom'; document.getElementById('fieldA_custom_container').classList.remove('hidden'); document.getElementById('fieldA_date').value='${formatDateDash(cellDate)}'; }">
+            let html = `<div class="${classes}" onclick="if('${state.appMode}' === 'add') { window.openModal(); document.getElementById('fieldA_select').value='custom'; document.getElementById('fieldA_custom_container').classList.remove('hidden'); document.getElementById('fieldA_date').value='${formatDateDash(cellDate)}'; }">
                 <div class="text-right text-sm font-semibold mb-1 ${isToday ? 'text-blue-600' : ''}">${cellDate.getDate()}</div>
                 <div class="flex-1 space-y-1 overflow-y-auto no-scrollbar">`;
             
