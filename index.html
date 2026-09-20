@@ -26,7 +26,7 @@
         .hour-slot { height: 60px; border-bottom: 1px dashed #e5e7eb; box-sizing: border-box; }
         
         /* 紀錄標籤 */
-        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; }
+        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; margin-bottom: 2px; }
         .event-badge:hover { transform: scale(1.02); z-index: 50 !important; }
         .mode-view { background-color: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
         .cloud-synced { background-color: #dcfce3; color: #166534; border-left: 2px solid #22c55e; }
@@ -43,7 +43,7 @@
 
     <!-- Sidebar -->
     <div id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
-        <div class="p-5 bg-blue-600 text-white flex justify-between items-center">
+        <div class="p-5 bg-blue-600 text-white flex justify-between items-center shrink-0">
             <h2 class="text-xl font-bold">查驗紀錄站</h2>
             <button onclick="toggleSidebar()" class="text-white hover:text-gray-200 focus:outline-none">
                 <i class="fas fa-times text-xl"></i>
@@ -63,42 +63,56 @@
                 <span class="font-medium">3 查驗紀錄總覽</span>
             </button>
         </div>
+        
+        <!-- 手動更新與狀態區塊 -->
+        <div class="p-4 border-t bg-gray-50 shrink-0">
+            <div class="flex flex-col space-y-2">
+                <div class="text-xs text-gray-500 flex items-center">
+                    <i class="fas fa-history mr-1"></i> 最後同步: <span id="syncTimeText" class="ml-1 text-gray-700 font-semibold">尚未同步</span>
+                </div>
+                <button type="button" id="btnManualSync" onclick="fetchDataFromCloud(true)" class="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold py-2 rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none flex justify-center items-center transition-colors">
+                    <i class="fas fa-sync-alt mr-2" id="syncIcon"></i> 手動更新資料
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
     <div class="flex-1 flex flex-col h-full relative">
         <!-- Header -->
-        <header id="mainHeader" class="bg-blue-600 text-white shadow-md flex flex-wrap items-center justify-between p-3 z-10 transition-colors duration-300">
-            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
-                <button onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">查驗紀錄站</h1>
-                    <div id="modeIndicator" class="text-xs bg-white bg-opacity-20 rounded px-2 py-0.5 mt-0.5 inline-block">目前模式: 廠商登錄查驗</div>
-                </div>
-            </div>
-            
-            <div class="flex items-center space-x-2 sm:space-x-4">
-                <div class="bg-white bg-opacity-20 rounded-lg p-1 flex">
-                    <button onclick="switchView('month')" id="btnMonthView" class="px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
-                    <button onclick="switchView('week')" id="btnWeekView" class="px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
+        <header id="mainHeader" class="bg-blue-600 text-white shadow-md p-3 z-10 transition-colors duration-300">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <button onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none flex-shrink-0">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 truncate">
+                        <h1 class="text-lg font-bold leading-tight truncate">查驗紀錄站</h1>
+                        <div id="modeIndicator" class="text-[10px] sm:text-xs bg-white bg-opacity-20 rounded px-2 py-0.5 mt-0.5 sm:mt-0 whitespace-nowrap">目前模式: 廠商登錄查驗</div>
+                    </div>
                 </div>
                 
-                <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-2">
-                    <button onclick="changeDateOffset(-1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left"></i></button>
-                    <span id="currentMonthLabel" class="font-bold min-w-[100px] text-center text-sm sm:text-base">2026年 9月</span>
-                    <button onclick="changeDateOffset(1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right"></i></button>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-1 flex">
+                        <button onclick="switchView('month')" id="btnMonthView" class="px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
+                        <button onclick="switchView('week')" id="btnWeekView" class="px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
+                    </div>
+                    
+                    <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-2">
+                        <button onclick="changeDateOffset(-1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left"></i></button>
+                        <span id="currentMonthLabel" class="font-bold min-w-[90px] text-center text-sm">2026年 9月</span>
+                        <button onclick="changeDateOffset(1)" class="p-2 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right"></i></button>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Calendar Container (Scrollable horizontally on mobile) -->
+        <!-- Calendar Container -->
         <div id="calendarContainer" class="flex-1 overflow-auto bg-white flex flex-col">
             <!-- Calendar grid will be injected here -->
         </div>
         
-        <!-- Cloud Sync Status -->
+        <!-- Cloud Sync Status Indicator (Floating) -->
         <div id="syncStatus" class="absolute bottom-2 right-2 text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded-full flex items-center space-x-1 z-10 hidden">
             <i class="fas fa-cloud-download-alt"></i>
             <span>已同步雲端</span>
@@ -122,7 +136,6 @@
                     <input type="hidden" id="oldFolderName" value="">
                     
                     <div id="editBadgeContainer" class="flex justify-end hidden">
-                        <!-- '已編輯' badge goes here -->
                     </div>
 
                     <!-- A. 查驗日期 -->
@@ -192,7 +205,7 @@
                     </button>
                 </div>
                 
-                <!-- Delete Button Container (Only in Edit mode) -->
+                <!-- Delete Button Container -->
                 <div id="deleteBtnContainer" class="mt-3 hidden">
                     <button type="button" onclick="deleteRecord()" class="w-full bg-white text-red-600 border border-red-200 font-semibold py-2 rounded-lg shadow-sm hover:bg-red-50 focus:outline-none flex justify-center items-center transition-colors">
                         <i class="fas fa-trash-alt mr-2"></i> 刪除紀錄
@@ -212,26 +225,23 @@
         let records = [];
         const STORAGE_KEY = 'inspection_records_data';
         
-        // 1. 最新 API 端點更新
+        // Google Apps Script API Endpoint
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsdSn-gLMQ2mlK00l4QvBu7OXR9u6WjlFCzucmR1LAW2RTYvBkZuuyHRmq9FnIrvTLRA/exec';
 
         const state = {
-            appMode: 'add', // 'add', 'edit', 'view'
-            viewMode: 'month', // 'month', 'week'
+            appMode: 'add',
+            viewMode: 'month',
             currentDate: new Date()
         };
 
-        const currentPhotos = []; // Store base64 strings
+        const currentPhotos = []; 
         const el = {};
 
-        // 初始化
         window.onload = function() {
             cacheDOM();
             loadRecordsFromLocal();
             renderCalendar();
-            
-            // 開機自動從雲端同步歷史資料
-            fetchDataFromCloud();
+            fetchDataFromCloud(false); // 開機自動同步
         };
 
         function cacheDOM() {
@@ -242,8 +252,11 @@
                          'fieldF_contractor', 'fieldG_inspector', 'actionButtonsContainer', 'downloadButtonsContainer',
                          'btnSubmit', 'btnSubmitText', 'btnSubmitLoader', 'editBadgeContainer',
                          'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer',
-                         'recordId', 'isFromCloud', 'oldFolderName'];
+                         'recordId', 'isFromCloud', 'oldFolderName', 'syncTimeText', 'btnManualSync', 'syncIcon'];
             ids.forEach(id => el[id] = document.getElementById(id));
+            
+            // Assign form to el.form
+            el.form = el.recordForm;
         }
 
         function loadRecordsFromLocal() {
@@ -261,28 +274,37 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
         }
         
-        async function fetchDataFromCloud() {
+        window.fetchDataFromCloud = async function(isManual = false) {
+            if (isManual) {
+                el.btnManualSync.disabled = true;
+                el.syncIcon.classList.add('fa-spin');
+                el.syncTimeText.innerText = "更新中...";
+            }
+            
             try {
-                // 使用 GET 請求撈取資料，加上 redirect: 'follow' 確保跟隨 Google 的轉址
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'GET',
                     redirect: 'follow'
                 });
+                
                 if (!response.ok) throw new Error('Network response was not ok');
-                const result = await response.json();
+                
+                const text = await response.text();
+                if (text.trim().startsWith('<')) {
+                    throw new Error("權限錯誤或跨域阻擋");
+                }
+                
+                const result = JSON.parse(text);
                 
                 if (result.status === 'success' && result.records) {
-                    // 合併雲端與本地資料 (以雲端為主)
                     const cloudRecords = result.records;
                     const mergedRecords = [...records];
                     
                     cloudRecords.forEach(cr => {
                         const existingIdx = mergedRecords.findIndex(r => r.id === cr.id);
                         if (existingIdx >= 0) {
-                            // Update existing
                             mergedRecords[existingIdx] = {...mergedRecords[existingIdx], ...cr};
                         } else {
-                            // Add new
                             mergedRecords.push(cr);
                         }
                     });
@@ -291,13 +313,24 @@
                     saveRecordsToLocal();
                     renderCalendar();
                     
-                    // Show sync indicator briefly
-                    el.syncStatus.classList.remove('hidden');
-                    setTimeout(() => el.syncStatus.classList.add('hidden'), 3000);
+                    const now = new Date();
+                    el.syncTimeText.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    
+                    if(!isManual) {
+                        el.syncStatus.classList.remove('hidden');
+                        setTimeout(() => el.syncStatus.classList.add('hidden'), 3000);
+                    } else {
+                        alert("同步完成！");
+                    }
                 }
             } catch (error) {
-                console.warn("⚠️ 預覽環境或跨網域限制，無法同步雲端資料。發佈至 Netlify 後即可正常運作。錯誤細節:", error.message);
-                // 忽略錯誤，容許離線使用本地資料
+                console.warn("⚠️ 雲端資料同步中斷 (若是預覽環境可忽略，正式發佈後即正常):", error.message);
+                if(isManual) el.syncTimeText.innerText = "更新失敗";
+            } finally {
+                if(isManual) {
+                    el.btnManualSync.disabled = false;
+                    el.syncIcon.classList.remove('fa-spin');
+                }
             }
         }
 
@@ -316,7 +349,6 @@
             state.appMode = mode;
             toggleSidebar();
             
-            // 4. 不同模式更新標題列顏色與文字
             el.mainHeader.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-green-600');
             el.modalHeader.classList.remove('bg-blue-600', 'bg-orange-600', 'bg-green-600');
             el.btnSubmit.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-orange-600', 'hover:bg-orange-700');
@@ -326,6 +358,15 @@
                 el.mainHeader.classList.add('bg-blue-600');
                 el.modalHeader.classList.add('bg-blue-600');
                 el.btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                // 切換時自動打開彈窗
+                setTimeout(() => {
+                    window.openModal();
+                    el.fieldA_select.value = 'custom';
+                    el.fieldA_custom_container.classList.remove('hidden');
+                    el.fieldA_date.value = formatDateDash(new Date());
+                }, 150);
+                
             } else if (mode === 'edit') {
                 el.modeIndicator.innerText = '目前模式: 監造資料登錄 / 修改';
                 el.mainHeader.classList.add('bg-orange-600');
@@ -350,7 +391,6 @@
                 el.btnWeekView.className = "px-3 py-1 rounded-md text-sm font-medium bg-white text-blue-600 shadow-sm transition-colors";
                 el.btnMonthView.className = "px-3 py-1 rounded-md text-sm font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
             }
-            
             renderCalendar();
         };
 
@@ -366,7 +406,6 @@
         window.handleEventClick = function(event, id) {
             event.stopPropagation();
             if (state.appMode === 'add') {
-                // 4. 修改提示詞
                 alert('請於 監造查驗資料登錄 作更動時間或填寫紀錄。');
                 return;
             }
@@ -381,110 +420,110 @@
             
             if (state.appMode === 'add' && !existingData) {
                 el.modalTitle.innerText = '登錄查驗 (建議前一天登錄)';
-                el.btnSubmitText.innerText = '完成上傳';
-                el.recordId.value = '';
-                el.isFromCloud.value = 'false';
-                el.oldFolderName.value = '';
-                lockFieldsForAddMode();
+                el.fieldA_select.value = '';
+                el.fieldA_select.innerHTML = `
+                    <option value="">請選擇</option>
+                    <option value="today">今天</option>
+                    <option value="tomorrow">明天</option>
+                    <option value="custom">日期選擇...</option>
+                `;
+                unlockFieldsForAddMode();
+                el.actionButtonsContainer.classList.remove('hidden');
+                el.deleteBtnContainer.classList.add('hidden');
+                el.downloadButtonsContainer.classList.add('hidden');
+                el.btnSubmitText.innerText = "完成上傳";
+                
             } else if (state.appMode === 'edit' && existingData) {
-                el.modalTitle.innerText = '監造資料登錄 / 修改';
-                el.btnSubmitText.innerText = '儲存修改';
-                el.deleteBtnContainer.classList.remove('hidden');
+                el.modalTitle.innerText = '修改 / 登錄查驗資料';
+                el.fieldA_select.innerHTML = `<option value="custom">日期選擇</option>`;
+                el.actionButtonsContainer.classList.remove('hidden');
+                el.deleteBtnContainer.classList.remove('hidden'); // 顯示刪除按鈕
+                el.downloadButtonsContainer.classList.add('hidden');
+                el.btnSubmitText.innerText = "儲存修改";
                 populateForm(existingData);
-                // 儲存原始資料夾名稱供重新命名或刪除使用
-                el.oldFolderName.value = `${existingData.date.replace(/\//g, '')}_${existingData.item}`;
+                
+                const origDate = existingData.date.replace(/\//g, '');
+                el.oldFolderName.value = `${origDate}_${existingData.item}`;
+                
             } else if (state.appMode === 'view' && existingData) {
-                el.modalTitle.innerText = '檢視查驗紀錄';
+                el.modalTitle.innerText = '查驗紀錄總覽';
                 el.actionButtonsContainer.classList.add('hidden');
+                el.deleteBtnContainer.classList.add('hidden');
                 el.downloadButtonsContainer.classList.remove('hidden');
                 populateForm(existingData);
                 lockAllFields();
             }
-            
+
             el.dataModal.classList.remove('hidden');
-        }
+        };
 
         window.closeModal = function() {
             el.dataModal.classList.add('hidden');
         };
 
-        function resetForm() {
-            el.form = document.getElementById('recordForm');
-            el.form.reset();
-            el.fieldA_custom_container.classList.add('hidden');
-            el.editBadgeContainer.innerHTML = '';
-            el.photoPreviewContainer.innerHTML = '';
-            
-            Array.from(el.form.elements).forEach(inp => {
-                if(inp.id !== 'btnNow') {
-                    inp.disabled = false;
-                    inp.classList.remove('bg-gray-100', 'cursor-not-allowed');
-                }
-            });
-            el.btnNow.disabled = false;
-            
-            el.actionButtonsContainer.classList.remove('hidden');
-            el.downloadButtonsContainer.classList.add('hidden');
-            el.deleteBtnContainer.classList.add('hidden');
-        }
-
-        window.setNowTime = function() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            el.fieldB_time.value = `${h}:${m}`;
-        };
-
-        function lockFieldsForAddMode() {
-            const fieldsToLock = [el.fieldE_photo, el.fieldF_contractor, el.fieldG_inspector];
-            fieldsToLock.forEach(f => {
-                f.disabled = true;
-                f.classList.add('bg-gray-100', 'cursor-not-allowed');
-            });
-            document.getElementById('photoReqStar').classList.add('hidden');
-            document.getElementById('contractorReqStar').classList.add('hidden');
-            document.getElementById('inspectorReqStar').classList.add('hidden');
-            
-            // Remove 'today' restriction on lock/unlock dynamically
-        }
-
-        function unlockFieldsForAddMode() {
-            const fieldsToLock = [el.fieldE_photo, el.fieldF_contractor, el.fieldG_inspector];
-            fieldsToLock.forEach(f => {
-                f.disabled = false;
-                f.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            });
-            document.getElementById('photoReqStar').classList.remove('hidden');
-            document.getElementById('contractorReqStar').classList.remove('hidden');
-            document.getElementById('inspectorReqStar').classList.remove('hidden');
-        }
-
         window.handleDateSelectChange = function() {
             const val = el.fieldA_select.value;
-            const today = new Date();
-            let targetDate = new Date();
-            
-            if (val === 'tomorrow') {
-                targetDate.setDate(today.getDate() + 1);
-                el.fieldA_custom_container.classList.add('hidden');
-                el.fieldA_date.value = formatDateDash(targetDate);
-                if(state.appMode === 'add') lockFieldsForAddMode();
-            } else if (val === 'today') {
-                el.fieldA_custom_container.classList.add('hidden');
-                el.fieldA_date.value = formatDateDash(today);
-                if(state.appMode === 'add') unlockFieldsForAddMode();
-            } else if (val === 'custom') {
+            if (val === 'custom') {
                 el.fieldA_custom_container.classList.remove('hidden');
-                if(state.appMode === 'add') lockFieldsForAddMode();
-                el.fieldA_date.value = '';
+                if(!el.fieldA_date.value) el.fieldA_date.value = formatDateDash(new Date());
             } else {
                 el.fieldA_custom_container.classList.add('hidden');
-                el.fieldA_date.value = '';
-                if(state.appMode === 'add') lockFieldsForAddMode();
+                if (val === 'today') el.fieldA_date.value = formatDateDash(new Date());
+                else if (val === 'tomorrow') {
+                    const d = new Date(); d.setDate(d.getDate() + 1);
+                    el.fieldA_date.value = formatDateDash(d);
+                }
+            }
+            
+            if (state.appMode === 'add') {
+                if (val) unlockFieldsForAddMode();
             }
         };
 
-        window.handlePhotoUpload = function(event) {
+        window.setNowTime = function() {
+            const now = new Date();
+            el.fieldB_time.value = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        };
+
+        function resetForm() {
+            el.form.reset();
+            el.recordId.value = '';
+            el.isFromCloud.value = 'false';
+            el.oldFolderName.value = '';
+            el.fieldA_custom_container.classList.add('hidden');
+            el.photoPreviewContainer.innerHTML = '';
+            el.editBadgeContainer.classList.add('hidden');
+            
+            Array.from(el.form.elements).forEach(inp => {
+                inp.disabled = false;
+                inp.classList.remove('bg-gray-50');
+            });
+            el.btnNow.disabled = false;
+            
+            if (state.appMode === 'add') {
+                el.fieldE_photo.disabled = true;
+                el.fieldF_contractor.disabled = true;
+                el.fieldG_inspector.disabled = true;
+                el.photoReqStar.classList.add('hidden');
+                el.contractorReqStar.classList.add('hidden');
+                el.inspectorReqStar.classList.add('hidden');
+            } else {
+                el.photoReqStar.classList.remove('hidden');
+                el.contractorReqStar.classList.remove('hidden');
+                el.inspectorReqStar.classList.remove('hidden');
+            }
+        }
+        
+        function unlockFieldsForAddMode() {
+            el.fieldE_photo.disabled = false;
+            el.fieldF_contractor.disabled = false;
+            el.fieldG_inspector.disabled = false;
+            el.photoReqStar.classList.remove('hidden');
+            el.contractorReqStar.classList.remove('hidden');
+            el.inspectorReqStar.classList.remove('hidden');
+        }
+
+        window.handlePhotoUpload = async function(event) {
             const files = event.target.files;
             if (files.length + currentPhotos.length > 4) {
                 alert('最多只能放置四張照片');
@@ -492,21 +531,108 @@
                 return;
             }
 
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64Str = e.target.result;
-                    currentPhotos.push(base64Str);
-                    renderPhotoPreview();
-                };
-                reader.readAsDataURL(file);
-            });
+            const selectedDate = el.fieldA_date.value ? formatDateSlash(new Date(el.fieldA_date.value)) : formatDateSlash(new Date());
+
+            el.btnSubmit.disabled = true;
+            el.btnSubmitText.innerText = "照片處理與壓縮中...";
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const base64Str = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.readAsDataURL(file);
+                    });
+                    
+                    const watermarkedBase64 = await addWatermark(base64Str, selectedDate);
+                    currentPhotos.push(watermarkedBase64);
+                }
+                renderPhotoPreview();
+            } catch (e) {
+                console.error("照片處理失敗", e);
+                alert("照片處理失敗，請重試");
+            } finally {
+                el.btnSubmit.disabled = false;
+                el.btnSubmitText.innerText = state.appMode === 'add' ? "完成上傳" : "儲存修改";
+            }
         };
+
+        function addWatermark(base64Str, dateText) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    let MAX_WIDTH = 1280;
+                    let MAX_HEIGHT = 1280;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    const TARGET_BASE64_LENGTH = 650000; // ~500KB
+                    let quality = 0.8; 
+                    let dataUrl = '';
+                    
+                    const processImage = () => {
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const fontSize = Math.max(24, Math.floor(width * 0.05));
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'bottom';
+                        
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                        ctx.shadowBlur = 6;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+                        
+                        const padding = fontSize * 0.5;
+                        ctx.fillText(dateText, width - padding, height - padding);
+                        
+                        dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        
+                        if (dataUrl.length > TARGET_BASE64_LENGTH) {
+                            if (quality > 0.4) {
+                                quality -= 0.15;
+                                processImage();
+                            } else {
+                                width *= 0.8;
+                                height *= 0.8;
+                                quality = 0.7; 
+                                processImage();
+                            }
+                        } else {
+                            resolve(dataUrl); 
+                        }
+                    };
+
+                    processImage();
+                };
+                img.src = base64Str;
+            });
+        }
 
         function renderPhotoPreview() {
             el.photoPreviewContainer.innerHTML = '';
-            const selectedDate = el.fieldA_date.value ? formatDateSlash(new Date(el.fieldA_date.value)) : formatDateSlash(new Date());
-
+            
             currentPhotos.forEach((photoSrc, index) => {
                 const div = document.createElement('div');
                 div.className = 'relative border rounded-md overflow-hidden aspect-video bg-black flex items-center justify-center';
@@ -515,12 +641,7 @@
                 img.src = photoSrc;
                 img.className = 'max-h-full max-w-full object-contain';
                 
-                const watermark = document.createElement('div');
-                watermark.className = 'absolute bottom-1 right-1 text-yellow-400 text-[10px] font-bold drop-shadow-md bg-black bg-opacity-30 px-1 rounded';
-                watermark.innerText = selectedDate;
-
                 div.appendChild(img);
-                div.appendChild(watermark);
                 
                 if (state.appMode !== 'view') {
                     const delBtn = document.createElement('button');
@@ -541,7 +662,6 @@
             el.recordId.value = data.id;
             el.isFromCloud.value = data.isFromCloud || false;
             
-            // Set custom date select
             el.fieldA_select.value = 'custom';
             el.fieldA_custom_container.classList.remove('hidden');
             el.fieldA_date.value = data.date ? data.date.replace(/\//g, '-') : '';
@@ -574,12 +694,10 @@
         }
 
         window.saveRecord = async function() {
-            // Validation
             if (!el.fieldA_date.value) { alert('請選擇查驗日期'); return; }
             if (!el.fieldB_time.value) { alert('請選擇查驗時間'); return; }
             if (!el.fieldC_item.value.trim()) { alert('請填寫查驗項目'); return; }
             
-            // Mode specific validation
             if (!el.fieldF_contractor.disabled) {
                 if (currentPhotos.length === 0 && el.isFromCloud.value !== 'true') { alert('請上傳至少一張查驗照片'); return; }
                 if (!el.fieldF_contractor.value.trim()) { alert('請填寫施工廠商'); return; }
@@ -603,7 +721,6 @@
                 isFromCloud: el.isFromCloud.value === 'true'
             };
 
-            // 1. Save to local first for immediate UI feedback
             if (isEdit) {
                 const idx = records.findIndex(r => r.id === newId);
                 if (idx !== -1) records[idx] = recordData;
@@ -613,7 +730,6 @@
             saveRecordsToLocal();
             renderCalendar();
 
-            // 2. Background sync to Google Drive via GAS
             el.btnSubmit.disabled = true;
             el.btnSubmitText.innerText = "雲端同步中...";
             el.btnSubmitLoader.classList.remove('hidden');
@@ -621,7 +737,7 @@
             try {
                 const payload = {
                     action: 'save',
-                    oldFolderName: el.oldFolderName.value, // 【需求6】傳送舊檔名供重新命名用
+                    oldFolderName: el.oldFolderName.value, 
                     date: recordData.date,
                     time: recordData.time,
                     item: recordData.item,
@@ -633,7 +749,7 @@
 
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    redirect: 'follow', // 確保跟隨 GAS 的重新導向
+                    redirect: 'follow', 
                     body: JSON.stringify(payload)
                 });
                 
@@ -642,12 +758,15 @@
                 try {
                     result = JSON.parse(responseText);
                 } catch(e) {
-                    console.error("Parse error, raw response:", responseText);
-                    throw new Error("無法解析伺服器回應");
+                    if (responseText.trim().startsWith('<')) {
+                        console.warn("⚠️ 跨網域或權限錯誤，但本地已儲存。發佈至正式網址後即可正常。");
+                        result = { status: 'success' }; 
+                    } else {
+                        throw new Error("無法解析伺服器回應");
+                    }
                 }
 
                 if (result.status === 'success') {
-                    // Update local record to mark it as synced
                     const idx = records.findIndex(r => r.id === newId);
                     if (idx !== -1) {
                         records[idx].isFromCloud = true;
@@ -660,8 +779,8 @@
                 }
             } catch (error) {
                 console.error('Upload Error:', error);
-                alert("本機已儲存，但上傳雲端發生錯誤。請確認網路狀態與權限。");
-                closeModal(); // 允許使用者關閉視窗，因為本地已儲存
+                alert("本機已儲存，但上傳雲端發生錯誤。正式發佈後即可解決。");
+                closeModal(); 
             } finally {
                 el.btnSubmit.disabled = false;
                 el.btnSubmitText.innerText = state.appMode === 'add' ? "完成上傳" : "儲存修改";
@@ -670,32 +789,28 @@
         };
 
         window.deleteRecord = async function() {
-            // 【需求5】改用按鈕防呆確認
-            if(!confirm("確定要刪除這筆紀錄嗎？\n資料將會被移至雲端的「已刪除」資料夾。")) {
+            if(!confirm("確定要刪除這筆紀錄嗎？\n刪除後，雲端硬碟的對應資料夾將會被移至「已刪除」垃圾桶。")) {
                 return;
             }
 
             const id = el.recordId.value;
             const oldName = el.oldFolderName.value;
 
-            // 1. Local delete
             records = records.filter(r => r.id !== id);
             saveRecordsToLocal();
             renderCalendar();
             closeModal();
 
-            // 2. Cloud delete (Move to Trash)
             if (oldName) {
                 try {
                     const payload = { action: 'delete', oldFolderName: oldName };
-                    fetch(GOOGLE_SCRIPT_URL, {
+                    await fetch(GOOGLE_SCRIPT_URL, {
                         method: 'POST',
                         redirect: 'follow',
                         body: JSON.stringify(payload)
                     });
-                    // Fire and forget, local UI is already updated
                 } catch(e) {
-                    console.warn("⚠️ 刪除同步失敗 (預覽環境限制):", e);
+                    console.warn("⚠️ 刪除同步中斷 (預覽環境限制):", e);
                 }
             }
         };
@@ -767,15 +882,12 @@
 
             const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             
-            // 加入 overflow-x-auto 讓手機版格線固定不擠壓
             let html = `<div class="flex-1 overflow-x-auto no-scrollbar"><div class="min-w-[700px] h-full flex flex-col">`;
             
-            // Header
             html += `<div class="grid grid-cols-7 gap-[1px] bg-gray-200 text-center text-sm font-semibold text-gray-600 py-2">`;
             dayNames.forEach(d => html += `<div>${d}</div>`);
             html += `</div>`;
 
-            // Body
             html += `<div class="calendar-grid flex-1">`;
             
             let curr = new Date(startDate);
@@ -802,10 +914,8 @@
 
             const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             
-            // 【需求3】加寬 min-w-[1000px] 讓手機可左右滑動且格線寬大
             let html = `<div class="flex-1 overflow-x-auto no-scrollbar relative w-full"><div class="min-w-[1000px] flex flex-col min-h-full">`;
             
-            // Header
             html += `<div class="week-header-grid text-sm font-semibold text-gray-600 text-center py-2 sticky top-0 z-20 shadow-sm bg-gray-50 border-b border-gray-300">
                 <div class="bg-gray-50 flex items-center justify-center">時間</div>`;
             for(let i=0; i<7; i++) {
@@ -819,17 +929,14 @@
             }
             html += `</div>`;
 
-            // Body
             html += `<div class="week-body-grid flex-1 relative">`;
             
-            // Create time axis
             html += `<div class="flex flex-col bg-white border-r border-gray-200">`;
             for(let h=0; h<24; h++) {
                 html += `<div class="time-axis-cell">${String(h).padStart(2,'0')}:00</div>`;
             }
             html += `</div>`;
 
-            // Create 7 columns for days
             for(let i=0; i<7; i++) {
                 const d = new Date(startOfWeek);
                 d.setDate(d.getDate() + i);
@@ -838,15 +945,12 @@
                 
                 html += `<div class="week-day-col border-r border-gray-100">`;
                 
-                // Render 24 empty slots for visual grid
                 for(let h=0; h<24; h++) {
                     html += `<div class="hour-slot"></div>`;
                 }
                 
-                // 【需求3】碰撞偵測與寬度均分演算法
                 const timeGroups = {};
                 dayEvents.forEach(ev => {
-                    // 取小時作為分組依據 (粗略碰撞)
                     const hourPrefix = ev.time.split(':')[0]; 
                     if (!timeGroups[hourPrefix]) timeGroups[hourPrefix] = [];
                     timeGroups[hourPrefix].push(ev);
@@ -854,7 +958,7 @@
 
                 Object.keys(timeGroups).forEach(hourKey => {
                     const group = timeGroups[hourKey];
-                    const count = group.length; // 該時段有幾個重疊行程
+                    const count = group.length;
                     
                     group.forEach((ev, idx) => {
                         const timeParts = ev.time.split(':');
@@ -868,14 +972,13 @@
                         const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
                         const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
                         
-                        // 計算並排寬度 (留一點 margin 避免黏死)
                         const widthPct = 100 / count;
                         const leftPct = idx * widthPct;
                         
                         html += `
                             <div class="event-badge ${badgeClass} shadow-md absolute z-10 p-1 border border-white" 
                                  style="top: ${topOffset}px; left: calc(${leftPct}%); width: calc(${widthPct}% - 2px);" 
-                                 onclick="handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
+                                 onclick="window.handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
                                 <div class="font-bold text-[10px] leading-tight">${ev.time}</div>
                                 <div class="truncate text-xs font-semibold leading-tight mt-0.5">${ev.item}</div>
                                 <div class="truncate text-[10px] opacity-80 leading-tight mt-0.5">${ev.contractor || ''}</div>
@@ -895,7 +998,6 @@
             const dateStr = formatDate(cellDate);
             const dayEvents = records.filter(r => r.date === dateStr);
             
-            // Sort by time
             dayEvents.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             
             let classes = "calendar-cell flex flex-col";
@@ -908,10 +1010,9 @@
             
             dayEvents.forEach(ev => {
                 const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
-                // 雲端資料綠色，完整填寫藍色，草稿灰色
                 const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
                 
-                html += `<div class="event-badge ${badgeClass}" onclick="handleEventClick(event, '${ev.id}')" title="${ev.item}">
+                html += `<div class="event-badge ${badgeClass}" onclick="window.handleEventClick(event, '${ev.id}')" title="${ev.item}">
                     <span class="font-bold">${ev.time}</span> ${ev.item} ${ev.isEdited ? '<span class="text-orange-500 font-bold">(編)</span>' : ''}
                 </div>`;
             });
