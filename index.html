@@ -37,13 +37,6 @@
         .event-badge.mode-edit { background-color: #fef3c7; color: #92400e; border-left: 2px solid #f59e0b; }
         .event-badge.cloud-synced { background-color: #e0e7ff; color: #3730a3; border-left: 2px solid #6366f1; } /* 雲端資料顏色 */
 
-        /* Slide to delete styling */
-        .slider-container { position: relative; width: 100%; height: 40px; background-color: #fee2e2; border-radius: 9999px; overflow: hidden; border: 1px solid #fca5a5; }
-        .slider-input { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
-        .slider-progress { position: absolute; left: 0; top: 0; height: 100%; background-color: #ef4444; width: 0%; pointer-events: none; transition: width 0.1s; }
-        .slider-text { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #991b1b; font-weight: bold; pointer-events: none; z-index: 5; transition: color 0.3s; }
-        .slider-input:active + .slider-progress + .slider-text { color: white; }
-
         /* Hide scrollbar for sidebar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -59,7 +52,7 @@
         const STORAGE_KEY = 'inspection_records_data';
         
         // 最新 API 端點
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz874KLGYQHPhzN_RZITaOEeGJ81Sr1Wit3Z2ei3pdbmCOH7UDRDA2t9yK7yg-KLeE4mQ/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0gm2QMcaluNA4ME4mTQJVPZaiq0DdMzx5WzM7IQoBjosgQrO5oukK2jr30juTJ4QzSw/exec';
 
         const state = {
             currentDate: new Date(),
@@ -105,9 +98,8 @@
             
             // Buttons
             btnSave: document.getElementById('btnSave'),
-            slideDeleteContainer: document.getElementById('slideDeleteContainer'),
-            deleteSlider: document.getElementById('deleteSlider'),
-            deleteProgress: document.getElementById('deleteProgress'),
+            deleteBtnContainer: document.getElementById('deleteBtnContainer'),
+            btnDeleteRecord: document.getElementById('btnDeleteRecord'),
             actionButtonsContainer: document.getElementById('actionButtonsContainer'),
             downloadButtonsContainer: document.getElementById('downloadButtonsContainer'),
             btnDownloadPhotos: document.getElementById('btnDownloadPhotos'),
@@ -452,8 +444,6 @@
             state.photosBase64 = [];
             el.modalOverlay.classList.add('hidden');
             el.modalOverlay.classList.remove('flex');
-            el.deleteSlider.value = 0;
-            el.deleteProgress.style.width = '0%';
         }
 
         function resetForm() {
@@ -471,7 +461,7 @@
             
             el.actionButtonsContainer.classList.remove('hidden');
             el.downloadButtonsContainer.classList.add('hidden');
-            el.slideDeleteContainer.classList.add('hidden');
+            el.deleteBtnContainer.classList.add('hidden');
         }
 
         // 時間按鈕
@@ -513,7 +503,7 @@
             }
 
             el.btnSave.innerText = '儲存修改';
-            el.slideDeleteContainer.classList.remove('hidden');
+            el.deleteBtnContainer.classList.remove('hidden');
             
             state.originalDataStr = JSON.stringify({
                 date: el.fieldA_custom.value, time: el.fieldB_custom.value, item: el.fieldC.value, location: el.fieldD.value, contractor: el.fieldF.value, supervisor: el.fieldG.value, photosCount: state.photosBase64.length
@@ -690,6 +680,8 @@
                 el.btnSave.innerText = '處理中...';
                 el.btnSave.disabled = true;
 
+                let oldFolderName = null;
+
                 if (state.appMode === 'add') {
                     payload.isEdited = false;
                     payload.id = 'ID_' + Date.now();
@@ -704,6 +696,11 @@
                     payload.isEdited = state.modalData.isEdited || (currentDataStr !== state.originalDataStr);
                     payload.id = state.modalData.id;
                     
+                    // 產生舊的資料夾名稱 (供雲端重新命名或刪除對比使用)
+                    if (state.modalData.date && state.modalData.item) {
+                        oldFolderName = state.modalData.date.replace(/\//g, '') + '_' + state.modalData.item;
+                    }
+                    
                     const index = records.findIndex(r => r.id === payload.id);
                     if (index !== -1) { records[index] = payload; saveData(); renderCalendar(); }
                 }
@@ -712,6 +709,8 @@
                 try {
                     el.btnSave.innerText = '雲端備份中...';
                     const gasPayload = {
+                        action: 'save',
+                        oldFolderName: oldFolderName,
                         date: payload.date, time: payload.time, item: payload.item, location: payload.location, contractor: payload.contractor, inspector: payload.supervisor, images: payload.photos
                     };
 
@@ -743,26 +742,42 @@
             }
         });
 
-        // Slide to Delete
-        el.deleteSlider.addEventListener('input', (e) => {
-            const val = e.target.value;
-            el.deleteProgress.style.width = val + '%';
-            if (val > 80) el.deleteProgress.classList.replace('bg-red-500', 'bg-red-600');
-            else el.deleteProgress.classList.replace('bg-red-600', 'bg-red-500');
-        });
+        // 刪除按鈕邏輯
+        el.btnDeleteRecord.addEventListener('click', async () => {
+            if (!state.modalData || !state.modalData.id) return;
+            
+            if (confirm('確定要刪除此筆紀錄嗎？\n(檔案將移至雲端「已刪除」資料夾)')) {
+                const originalDateStr = state.modalData.date.replace(/\//g, '');
+                const originalItem = state.modalData.item;
+                const oldFolderName = `${originalDateStr}_${originalItem}`;
+                
+                const originalBtnText = el.btnDeleteRecord.innerHTML;
+                el.btnDeleteRecord.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 刪除中...';
+                el.btnDeleteRecord.disabled = true;
 
-        el.deleteSlider.addEventListener('change', async (e) => {
-            if (e.target.value == 100) {
-                if (state.modalData && state.modalData.id) {
-                    if(confirm('確定要自畫面隱藏此筆紀錄嗎？(雲端資料夾需手動刪除)')) {
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'delete', oldFolderName: oldFolderName })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
                         records = records.filter(r => r.id !== state.modalData.id);
-                        saveData(); renderCalendar(); closeModal();
+                        saveData(); 
+                        renderCalendar(); 
+                        closeModal();
                     } else {
-                        el.deleteSlider.value = 0; el.deleteProgress.style.width = '0%';
+                        alert("雲端刪除失敗: " + result.message);
                     }
+                } catch (error) {
+                    console.error(error);
+                    alert("連線失敗，請檢查網路狀態。");
+                } finally {
+                    el.btnDeleteRecord.innerHTML = originalBtnText;
+                    el.btnDeleteRecord.disabled = false;
                 }
-            } else {
-                e.target.value = 0; el.deleteProgress.style.width = '0%';
             }
         });
 
@@ -960,12 +975,10 @@
             <div class="px-5 py-4 border-t bg-gray-50/80 backdrop-blur-sm">
                 <div id="actionButtonsContainer" class="space-y-3">
                     <button type="submit" form="inspectionForm" id="btnSave" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg shadow-sm transition focus:ring-4 focus:ring-gray-300">完成上傳</button>
-                    <div id="slideDeleteContainer" class="hidden pt-2">
-                        <div class="slider-container">
-                            <input type="range" min="0" max="100" value="0" class="slider-input" id="deleteSlider">
-                            <div class="slider-progress" id="deleteProgress"></div>
-                            <div class="slider-text text-sm"><i class="fas fa-trash-alt mr-2"></i>向右滑動以隱藏紀錄</div>
-                        </div>
+                    <div id="deleteBtnContainer" class="hidden pt-2 border-t border-gray-200">
+                        <button type="button" id="btnDeleteRecord" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded-lg shadow-sm border border-red-200 transition focus:ring-4 focus:ring-red-100 flex items-center justify-center gap-2">
+                            <i class="fas fa-trash-alt"></i> 刪除紀錄
+                        </button>
                     </div>
                 </div>
 
