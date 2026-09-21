@@ -12,24 +12,22 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f5f7; }
         
         /* 月檢視樣式 */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(90px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 700px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(60px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 100%; }
         .calendar-cell { background-color: white; min-height: 100px; padding: 4px; transition: background-color 0.2s; cursor: pointer; }
         .calendar-cell:hover { background-color: #f9fafb; }
         .calendar-cell.other-month { background-color: #f9fafb; color: #9ca3af; }
         .calendar-cell.today { background-color: #eff6ff; }
         
-        /* 週檢視樣式 (加寬至 1000px 以便滑動檢視) */
-        .week-header-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; min-width: 1000px; }
-        .week-body-grid { display: grid; grid-template-columns: 60px repeat(7, minmax(130px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 1000px; }
-        .time-axis-cell { background-color: white; height: 60px; text-align: center; font-size: 0.75rem; color: #6b7280; padding-top: 4px; border-bottom: 1px solid #f3f4f6; }
-        .week-day-col { background-color: white; position: relative; min-width: 130px; }
+        /* 週檢視樣式 */
+        .week-header-grid { display: grid; grid-template-columns: 50px repeat(7, minmax(135px, 1fr)); gap: 1px; min-width: 1000px; }
+        .week-body-grid { display: grid; grid-template-columns: 50px repeat(7, minmax(135px, 1fr)); gap: 1px; background-color: #e5e7eb; min-width: 1000px; }
+        .time-axis-cell { background-color: white; height: 60px; text-align: center; font-size: 0.70rem; color: #6b7280; padding-top: 4px; border-bottom: 1px solid #f3f4f6; }
+        .week-day-col { background-color: white; position: relative; min-width: 135px; }
         .hour-slot { height: 60px; border-bottom: 1px dashed #e5e7eb; box-sizing: border-box; }
         
         /* 紀錄標籤 */
-        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: transform 0.1s; margin-bottom: 2px; white-space: nowrap; }
+        .event-badge { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; overflow: hidden; cursor: pointer; transition: transform 0.1s; margin-bottom: 2px; white-space: nowrap; }
         .event-badge:hover { transform: scale(1.02); z-index: 50 !important; }
-        .mode-view { background-color: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
-        .cloud-synced { background-color: #dcfce3; color: #166534; border-left: 2px solid #22c55e; }
         
         /* 隱藏卷軸 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -51,26 +49,27 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-3">
             <button onclick="setMode('add')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
                 <i class="fas fa-plus-circle w-5"></i>
-                <span class="font-medium">1 廠商登錄查驗</span>
+                <span class="font-medium text-sm">1 廠商登錄查驗</span>
             </button>
             <button onclick="setMode('edit')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors hover:bg-orange-50 text-gray-700 hover:text-orange-700 border border-transparent hover:border-orange-200">
                 <i class="fas fa-edit w-5"></i>
-                <span class="font-medium">2 監造查驗資料登錄/修改</span>
+                <span class="font-medium text-sm">2 監造查驗資料登錄/修改</span>
             </button>
             <button onclick="setMode('view')" class="w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors hover:bg-green-50 text-gray-700 hover:text-green-700 border border-transparent hover:border-green-200">
                 <i class="fas fa-list-alt w-5"></i>
-                <span class="font-medium">3 查驗紀錄總覽</span>
+                <span class="font-medium text-sm">3 查驗紀錄總覽</span>
             </button>
         </div>
         
         <!-- 手動更新與狀態區塊 -->
         <div class="p-4 border-t bg-gray-50 shrink-0">
             <div class="flex flex-col space-y-2">
-                <div class="text-xs text-gray-500 flex items-center">
-                    <i class="fas fa-history mr-1"></i> 最後同步: <span id="syncTimeText" class="ml-1 text-gray-700 font-semibold">尚未同步</span>
+                <div class="text-xs text-gray-500 flex items-center justify-between">
+                    <span><i class="fas fa-history mr-1"></i>最後同步</span>
+                    <span id="syncTimeText" class="text-gray-700 font-semibold">尚未同步</span>
                 </div>
                 <button type="button" id="btnManualSync" onclick="fetchDataFromCloud(true)" class="w-full bg-white border border-gray-300 text-gray-700 text-sm font-semibold py-2 rounded-lg shadow-sm hover:bg-gray-100 focus:outline-none flex justify-center items-center transition-colors">
-                    <i class="fas fa-sync-alt mr-2" id="syncIcon"></i> 手動更新資料
+                    <i class="fas fa-sync-alt mr-2" id="syncIcon"></i> 雲端手動更新
                 </button>
             </div>
         </div>
@@ -78,70 +77,71 @@
 
     <div class="flex-1 flex flex-col h-full relative">
         <!-- Header -->
-        <header id="mainHeader" class="bg-blue-600 text-white shadow-md p-3 z-10 transition-colors duration-300">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center space-x-2 min-w-0">
-                    <button onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none flex-shrink-0">
-                        <i class="fas fa-bars text-xl"></i>
+        <header id="mainHeader" class="bg-blue-600 text-white shadow-md py-2 px-3 z-10 transition-colors duration-300">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleSidebar()" class="p-1.5 rounded-md hover:bg-black hover:bg-opacity-20 focus:outline-none shrink-0">
+                        <i class="fas fa-bars text-lg"></i>
                     </button>
-                    <div class="flex flex-col truncate">
-                        <h1 class="text-base font-bold leading-tight truncate">查驗紀錄站</h1>
-                        <div id="modeIndicator" class="text-[10px] bg-white bg-opacity-20 rounded px-1.5 py-0.5 mt-0.5 whitespace-nowrap">目前模式: 廠商登錄查驗</div>
+                    <div class="flex flex-col">
+                        <h1 class="text-sm sm:text-base font-bold leading-tight">查驗紀錄站</h1>
+                        <div id="modeIndicator" class="text-[10px] sm:text-xs bg-white bg-opacity-20 rounded px-1.5 py-0.5 mt-0.5 whitespace-nowrap inline-block">目前模式: 廠商登錄查驗</div>
                     </div>
                 </div>
                 
-                <div class="flex items-center space-x-2 flex-shrink-0">
+                <div class="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
                     <div class="bg-white bg-opacity-20 rounded-lg p-0.5 flex">
                         <button onclick="switchView('month')" id="btnMonthView" class="px-2.5 py-1 rounded-md text-xs font-medium bg-white text-blue-600 shadow-sm transition-colors">月</button>
                         <button onclick="switchView('week')" id="btnWeekView" class="px-2.5 py-1 rounded-md text-xs font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors">週</button>
                     </div>
                     
                     <div class="flex items-center bg-white bg-opacity-20 rounded-lg px-1">
-                        <button onclick="changeDateOffset(-1)" class="p-1.5 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left text-xs"></i></button>
-                        <span id="currentMonthLabel" class="font-bold min-w-[75px] text-center text-xs">2026年 9月</span>
-                        <button onclick="changeDateOffset(1)" class="p-1.5 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right text-xs"></i></button>
+                        <button onclick="changeDateOffset(-1)" class="p-1 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-left text-xs px-1"></i></button>
+                        <span id="currentMonthLabel" class="font-bold min-w-[70px] text-center text-xs">2026年 9月</span>
+                        <button onclick="changeDateOffset(1)" class="p-1 hover:bg-black hover:bg-opacity-20 rounded-full focus:outline-none"><i class="fas fa-chevron-right text-xs px-1"></i></button>
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- Calendar Container -->
-        <div id="calendarContainer" class="flex-1 overflow-auto bg-white flex flex-col">
-            <!-- Calendar grid will be injected here -->
+        <div id="calendarContainer" class="flex-1 overflow-x-auto bg-white flex flex-col">
+            <!-- Calendar grid injected dynamically -->
         </div>
         
-        <!-- Cloud Sync Status Indicator (Floating) -->
-        <div id="syncStatus" class="absolute bottom-2 right-2 text-xs bg-black bg-opacity-60 text-white px-2 py-1 rounded-full flex items-center space-x-1 z-10 hidden">
+        <!-- Cloud Sync Status Indicator -->
+        <div id="syncStatus" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs bg-black bg-opacity-70 text-white px-3 py-1.5 rounded-full flex items-center space-x-2 z-10 hidden shadow-lg">
             <i class="fas fa-cloud-download-alt"></i>
-            <span>已同步雲端</span>
+            <span id="syncStatusMsg">已同步雲端</span>
         </div>
     </div>
 
-    <div id="dataModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex justify-center items-center p-4">
+    <!-- Data Entry / Edit Modal -->
+    <div id="dataModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex justify-center items-center p-3 sm:p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-full flex flex-col overflow-hidden relative">
-            <div id="modalHeader" class="bg-blue-600 text-white p-4 flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-lg" id="modalTitle">登錄查驗</h3>
+            <div id="modalHeader" class="bg-blue-600 text-white p-3 sm:p-4 flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-base sm:text-lg" id="modalTitle">登錄查驗</h3>
                 <button onclick="closeModal()" class="text-white hover:text-gray-200 focus:outline-none">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             
-            <div class="p-4 overflow-y-auto flex-1 text-sm">
+            <div class="p-3 sm:p-4 overflow-y-auto flex-1 text-sm">
                 <form id="recordForm" class="space-y-4">
                     <input type="hidden" id="recordId">
                     <input type="hidden" id="isFromCloud" value="false">
                     <input type="hidden" id="oldFolderName" value="">
                     
-                    <div id="editBadgeContainer" class="flex justify-end hidden">
-                    </div>
+                    <div id="editBadgeContainer" class="flex justify-end hidden"></div>
 
                     <!-- A. 查驗日期 -->
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">A. 查驗日期 (必選) <span class="text-red-500">*</span></label>
-                        <select id="fieldA_select" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200" onchange="handleDateSelectChange()">
+                        <select id="fieldA_select" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 focus:ring focus:ring-blue-200 bg-white" onchange="handleDateSelectChange()">
                             <option value="">請選擇</option>
-                            <option value="today">今天</option>
+                            <option value="tomorrow">明天</option>
                             <option value="custom">日期選擇...</option>
+                            <option value="today">今天</option>
                         </select>
                         <div id="fieldA_custom_container" class="mt-2 hidden">
                             <input type="date" id="fieldA_date" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500">
@@ -153,7 +153,7 @@
                         <label class="block font-semibold text-gray-700 mb-1">B. 查驗時間 (必選) <span class="text-red-500">*</span></label>
                         <div class="flex space-x-2">
                             <input type="time" id="fieldB_time" class="flex-1 border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500">
-                            <button type="button" id="btnNow" onclick="setNowTime()" class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 whitespace-nowrap">現在時間</button>
+                            <button type="button" id="btnNow" onclick="setNowTime()" class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 text-sm font-medium whitespace-nowrap shadow-sm">現在時間</button>
                         </div>
                     </div>
 
@@ -171,48 +171,88 @@
 
                     <!-- E. 查驗照片 -->
                     <div id="fieldE_container">
-                        <label class="block font-semibold text-gray-700 mb-1">E. 查驗照片 (最多十張，自動壓縮至500KB) <span class="text-red-500" id="photoReqStar">*</span></label>
-                        <input type="file" id="fieldE_photo" accept="image/*" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" onchange="handlePhotoUpload(event)">
-                        <div id="photoPreviewContainer" class="grid grid-cols-2 gap-2 mt-2">
-                            <!-- Photos preview will be appended here -->
+                        <label class="block font-semibold text-gray-700 mb-1">E. 查驗照片 <span class="text-xs text-gray-500 font-normal">(選填，最多十張，單張最大500KB)</span></label>
+                        
+                        <!-- 水印設定區塊 -->
+                        <div class="flex items-center justify-between mb-2 bg-gray-50 p-2 rounded-md border border-gray-200 gap-2">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="watermarkCheckbox" onchange="toggleWatermark()" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
+                                <label for="watermarkCheckbox" class="ml-2 text-xs font-semibold text-gray-700 cursor-pointer whitespace-nowrap">加上日期浮水印</label>
+                            </div>
+                            <div class="flex space-x-1 shrink-0">
+                                <input type="date" id="watermarkDate" class="w-28 border-gray-300 rounded-md shadow-sm px-1 py-1 text-xs border focus:border-blue-500 disabled:opacity-50 disabled:bg-gray-200" disabled>
+                                <button type="button" id="btnWatermarkToday" onclick="setWatermarkToday()" class="px-2 py-1 bg-white border border-gray-300 rounded-md hover:bg-gray-100 text-xs font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>今日</button>
+                            </div>
+                        </div>
+
+                        <input type="file" id="fieldE_photo" accept="image/*" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50" onchange="handlePhotoUpload(event)">
+                        <div id="photoPreviewContainer" class="grid grid-cols-3 gap-2 mt-2">
+                            <!-- Photos preview appended here -->
                         </div>
                     </div>
 
                     <!-- F. 施工廠商 -->
                     <div id="fieldF_container">
-                        <label class="block font-semibold text-gray-700 mb-1">F. 施工廠商 (名字必填) <span class="text-red-500" id="contractorReqStar">*</span></label>
-                        <input type="text" id="fieldF_contractor" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫廠商名稱">
+                        <label class="block font-semibold text-gray-700 mb-1">F. 施工廠商 (名字必填) <span class="text-xs text-red-500 font-normal" id="contractorReqStar">* (需先上傳照片)</span></label>
+                        <input type="text" id="fieldF_contractor" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 disabled:bg-gray-100 disabled:opacity-70" placeholder="填寫廠商名稱">
                     </div>
 
                     <!-- G. 現場查驗監造 -->
                     <div id="fieldG_container">
-                        <label class="block font-semibold text-gray-700 mb-1">G. 現場查驗監造 (名字必填) <span class="text-red-500" id="inspectorReqStar">*</span></label>
-                        <input type="text" id="fieldG_inspector" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500" placeholder="填寫監造名稱">
+                        <label class="block font-semibold text-gray-700 mb-1">G. 現場查驗監造 (名字必填) <span class="text-xs text-red-500 font-normal" id="inspectorReqStar">* (需先上傳照片)</span></label>
+                        <input type="text" id="fieldG_inspector" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:border-blue-500 disabled:bg-gray-100 disabled:opacity-70" placeholder="填寫監造名稱">
                     </div>
                 </form>
             </div>
             
-            <div class="p-4 border-t bg-gray-50 shrink-0">
-                <!-- Add/Edit Mode Buttons -->
+            <div class="p-3 sm:p-4 border-t bg-gray-50 shrink-0">
                 <div id="actionButtonsContainer">
-                    <button type="button" onclick="saveRecord()" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none flex justify-center items-center">
+                    <button type="button" onclick="saveRecord()" id="btnSubmit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none flex justify-center items-center transition-colors">
                         <span id="btnSubmitText">完成上傳</span>
                         <i id="btnSubmitLoader" class="fas fa-circle-notch fa-spin ml-2 hidden"></i>
                     </button>
                 </div>
                 
-                <!-- Delete Button Container -->
                 <div id="deleteBtnContainer" class="mt-3 hidden">
                     <button type="button" onclick="deleteRecord()" class="w-full bg-white text-red-600 border border-red-200 font-semibold py-2 rounded-lg shadow-sm hover:bg-red-50 focus:outline-none flex justify-center items-center transition-colors">
                         <i class="fas fa-trash-alt mr-2"></i> 刪除紀錄
                     </button>
                 </div>
 
-                <!-- View Mode Buttons -->
                 <div id="downloadButtonsContainer" class="hidden flex space-x-2">
-                    <button type="button" onclick="downloadPhotos()" class="flex-1 bg-white text-blue-600 border border-blue-600 font-bold py-2 rounded-lg hover:bg-blue-50 focus:outline-none text-sm">下載照片</button>
-                    <button type="button" onclick="downloadRecordText()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 focus:outline-none text-sm">下載紀錄</button>
+                    <button type="button" onclick="downloadPhotos()" class="flex-1 bg-white text-blue-600 border border-blue-600 font-bold py-2 rounded-lg hover:bg-blue-50 focus:outline-none text-sm transition-colors">下載照片</button>
+                    <button type="button" onclick="downloadRecordText()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 focus:outline-none text-sm transition-colors">下載紀錄</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Photo Lightbox Viewer -->
+    <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex flex-col justify-between items-center p-4">
+        <div class="w-full flex justify-between items-center text-white py-2">
+            <span id="viewerCounter" class="text-sm font-medium">照片預覽</span>
+            <button onclick="closePhotoViewer()" class="text-white hover:text-gray-300 p-2 focus:outline-none">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <div class="flex-1 w-full flex items-center justify-center overflow-auto relative">
+            <img id="viewerImage" src="" class="max-h-full max-w-full object-contain transition-transform duration-200 cursor-grab" style="transform: scale(1);">
+        </div>
+        <div class="flex space-x-4 py-3 bg-black bg-opacity-50 px-6 rounded-full text-white">
+            <button onclick="zoomViewer(0.25)" class="hover:text-blue-400 focus:outline-none"><i class="fas fa-search-plus text-lg"></i> 放大</button>
+            <button onclick="zoomViewer(-0.25)" class="hover:text-blue-400 focus:outline-none"><i class="fas fa-search-minus text-lg"></i> 縮小</button>
+            <button onclick="resetZoomViewer()" class="hover:text-blue-400 focus:outline-none"><i class="fas fa-redo text-lg"></i> 還原</button>
+        </div>
+    </div>
+
+    <!-- Custom Notification Modal (Replaces browser alert/confirm) -->
+    <div id="customModal" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden flex justify-center items-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 text-center flex flex-col items-center">
+            <div id="customModalIcon" class="text-blue-600 text-3xl mb-3"><i class="fas fa-info-circle"></i></div>
+            <p id="customModalMessage" class="text-gray-800 text-base font-medium mb-5">提示訊息</p>
+            <div id="customModalButtons" class="flex space-x-3 w-full">
+                <button id="customModalOkBtn" onclick="closeCustomModal()" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 focus:outline-none">確定</button>
+                <button id="customModalCancelBtn" onclick="closeCustomModal(false)" class="flex-1 bg-gray-200 text-gray-700 font-bold py-2 rounded-lg hover:bg-gray-300 focus:outline-none hidden">取消</button>
             </div>
         </div>
     </div>
@@ -220,8 +260,6 @@
     <script type="module">
         let records = [];
         const STORAGE_KEY = 'inspection_records_data';
-        
-        // Google Apps Script API Endpoint
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqM6BBjesyyIF7VpA8jhVYVU_Eew81i9ToSw-xMufJXfNjdpxhL9fveUaVq3QeaAAb0g/exec';
 
         const state = {
@@ -232,21 +270,18 @@
 
         const currentPhotos = []; 
         const el = {};
+        let viewerScale = 1;
 
         window.onload = function() {
             cacheDOM();
             loadRecordsFromLocal();
             renderCalendar();
-            fetchDataFromCloud(false); // 開機自動同步
+            fetchDataFromCloud(false); 
             
-            // 初始若預設在 add 模式，直接自動彈出視窗
             if (state.appMode === 'add') {
                 setTimeout(() => {
                     window.openModal();
-                    el.fieldA_select.value = 'custom';
-                    el.fieldA_custom_container.classList.remove('hidden');
-                    el.fieldA_date.value = formatDateDash(new Date());
-                }, 100);
+                }, 200);
             }
         };
 
@@ -257,21 +292,45 @@
                          'fieldC_item', 'fieldD_location', 'fieldE_photo', 'photoPreviewContainer',
                          'fieldF_contractor', 'fieldG_inspector', 'actionButtonsContainer', 'downloadButtonsContainer',
                          'btnSubmit', 'btnSubmitText', 'btnSubmitLoader', 'editBadgeContainer',
-                         'btnMonthView', 'btnWeekView', 'syncStatus', 'btnNow', 'deleteBtnContainer',
+                         'btnMonthView', 'btnWeekView', 'syncStatus', 'syncStatusMsg', 'btnNow', 'deleteBtnContainer',
                          'recordId', 'isFromCloud', 'oldFolderName', 'syncTimeText', 'btnManualSync', 'syncIcon',
-                         'photoReqStar', 'contractorReqStar', 'inspectorReqStar'];
+                         'contractorReqStar', 'inspectorReqStar', 'watermarkCheckbox', 'watermarkDate', 'btnWatermarkToday',
+                         'photoViewerModal', 'viewerImage', 'viewerCounter',
+                         'customModal', 'customModalMessage', 'customModalIcon', 'customModalOkBtn', 'customModalCancelBtn'];
             ids.forEach(id => el[id] = document.getElementById(id));
             if (el.recordForm) el.form = el.recordForm;
         }
 
+        // Custom Notification without native alert/confirm
+        window.showMsg = function(msg, iconClass = 'fa-info-circle text-blue-600') {
+            el.customModalIcon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+            el.customModalMessage.innerText = msg;
+            el.customModalCancelBtn.classList.add('hidden');
+            el.customModalOkBtn.innerText = "確定";
+            el.customModalOkBtn.onclick = closeCustomModal;
+            el.customModal.classList.remove('hidden');
+        };
+
+        window.showConfirm = function(msg, onYes) {
+            el.customModalIcon.innerHTML = `<i class="fas fa-exclamation-triangle text-amber-500"></i>`;
+            el.customModalMessage.innerText = msg;
+            el.customModalCancelBtn.classList.remove('hidden');
+            el.customModalOkBtn.innerText = "確定";
+            el.customModalOkBtn.onclick = () => {
+                closeCustomModal();
+                if(onYes) onYes();
+            };
+            el.customModal.classList.remove('hidden');
+        };
+
+        window.closeCustomModal = function() {
+            el.customModal.classList.add('hidden');
+        };
+
         function loadRecordsFromLocal() {
             const data = localStorage.getItem(STORAGE_KEY);
             if (data) {
-                try {
-                    records = JSON.parse(data);
-                } catch(e) {
-                    records = [];
-                }
+                try { records = JSON.parse(data); } catch(e) { records = []; }
             }
         }
 
@@ -293,26 +352,18 @@
                 });
                 
                 if (!response.ok) throw new Error('Network response was not ok');
-                
-                const text = await response.text();
-                if (text.trim().startsWith('<')) {
-                    throw new Error("權限錯誤或跨域阻擋");
-                }
-                
-                const result = JSON.parse(text);
+                const result = await response.json();
                 
                 if (result.status === 'success' && result.records) {
                     const cloudRecords = result.records;
-                    
-                    // 需求3: 嚴格與雲端同步。如果雲端沒有，就從行事曆刪除；如果有，就更新。
-                    // 清除所有舊的雲端快取，僅保留尚未同步的本機暫存紀錄，其餘完全以雲端為準
                     const localUnsynced = records.filter(r => !r.isFromCloud);
-                    records = [...localUnsynced];
                     
+                    const newRecords = [...localUnsynced];
                     cloudRecords.forEach(cr => {
-                        records.push({...cr, isFromCloud: true});
+                        newRecords.push({...cr, isFromCloud: true});
                     });
                     
+                    records = newRecords;
                     saveRecordsToLocal();
                     renderCalendar();
                     
@@ -321,21 +372,25 @@
                     
                     if(!isManual) {
                         el.syncStatus.classList.remove('hidden');
+                        el.syncStatusMsg.innerText = "已同步雲端";
                         setTimeout(() => el.syncStatus.classList.add('hidden'), 3000);
                     } else {
-                        alert("同步完成！");
+                        showMsg("雲端同步完成！已自動更新行事曆內容。", "fa-check-circle text-green-600");
                     }
                 }
             } catch (error) {
-                console.warn("⚠️ 雲端同步注意:", error.message);
-                if(isManual) el.syncTimeText.innerText = "更新失敗";
+                console.warn("雲端同步中斷:", error);
+                if(isManual) {
+                    el.syncTimeText.innerText = "連線失敗";
+                    showMsg("目前無法連線至雲端，請確認網路與GAS權限。", "fa-times-circle text-red-600");
+                }
             } finally {
                 if(isManual) {
                     el.btnManualSync.disabled = false;
                     el.syncIcon.classList.remove('fa-spin');
                 }
             }
-        }
+        };
 
         window.toggleSidebar = function() {
             const isOpen = !el.sidebar.classList.contains('-translate-x-full');
@@ -361,15 +416,7 @@
                 el.mainHeader.classList.add('bg-blue-600');
                 el.modalHeader.classList.add('bg-blue-600');
                 el.btnSubmit.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                
-                // 點選「廠商登錄查驗」後直接彈出浮動視窗
-                setTimeout(() => {
-                    window.openModal();
-                    el.fieldA_select.value = 'custom';
-                    el.fieldA_custom_container.classList.remove('hidden');
-                    el.fieldA_date.value = formatDateDash(new Date());
-                }, 100);
-                
+                setTimeout(() => window.openModal(), 200);
             } else if (mode === 'edit') {
                 el.modeIndicator.innerText = '目前模式: 監造資料登錄 / 修改';
                 el.mainHeader.classList.add('bg-orange-600');
@@ -386,7 +433,6 @@
 
         window.switchView = function(view) {
             state.viewMode = view;
-            
             if (view === 'month') {
                 el.btnMonthView.className = "px-2.5 py-1 rounded-md text-xs font-medium bg-white text-blue-600 shadow-sm transition-colors";
                 el.btnWeekView.className = "px-2.5 py-1 rounded-md text-xs font-medium text-white hover:bg-white hover:bg-opacity-20 transition-colors";
@@ -404,12 +450,12 @@
                 state.currentDate.setDate(state.currentDate.getDate() + (delta * 7));
             }
             renderCalendar();
-        }
+        };
 
         window.handleEventClick = function(event, id) {
             event.stopPropagation();
             if (state.appMode === 'add') {
-                alert('請於 監造查驗資料登錄 作更動時間或填寫紀錄。');
+                showMsg('請於 監造查驗資料登錄 作更動時間或填寫紀錄。');
                 return;
             }
             
@@ -427,15 +473,17 @@
                 el.fieldA_select.innerHTML = `
                     <option value="">請選擇</option>
                     <option value="tomorrow">明天</option>
-                    <option value="nextMonday">下週一</option>
                     <option value="custom">日期選擇...</option>
                     <option value="today">今天</option>
                 `;
-                // 依需求1：預設不開放後續欄位，必須明確選「今天」才解鎖
                 el.actionButtonsContainer.classList.remove('hidden');
                 el.deleteBtnContainer.classList.add('hidden');
                 el.downloadButtonsContainer.classList.add('hidden');
                 el.btnSubmitText.innerText = "完成上傳";
+                
+                el.fieldE_photo.disabled = true;
+                el.fieldF_contractor.disabled = true;
+                el.fieldG_inspector.disabled = true;
                 
             } else if (state.appMode === 'edit' && existingData) {
                 el.modalTitle.innerText = '修改 / 登錄查驗資料';
@@ -473,15 +521,6 @@
                 selectedDate.setDate(selectedDate.getDate() + 1);
                 el.fieldA_date.value = formatDateDash(selectedDate);
                 el.fieldA_custom_container.classList.add('hidden');
-            } else if (val === 'nextMonday') {
-                selectedDate.setDate(selectedDate.getDate() + (1 + 7 - selectedDate.getDay()) % 7 || 7);
-                if(selectedDate.getDay() !== 1) {
-                    let daysToMonday = 1 - selectedDate.getDay();
-                    if (daysToMonday <= 0) daysToMonday += 7;
-                    selectedDate.setDate(selectedDate.getDate() + daysToMonday);
-                }
-                el.fieldA_date.value = formatDateDash(selectedDate);
-                el.fieldA_custom_container.classList.add('hidden');
             } else if (val === 'custom') {
                 el.fieldA_custom_container.classList.remove('hidden');
                 if(!el.fieldA_date.value) el.fieldA_date.value = formatDateDash(new Date());
@@ -493,20 +532,42 @@
                 el.fieldA_date.value = '';
             }
             
-            // 需求1: 只有選「今天」才開放輸入後面內容
+            // Add mode: strict unlocking of E (photos) only if 'today' is selected
             if (state.appMode === 'add') {
                 if (val === 'today') {
-                    unlockFieldsForAddMode();
+                    el.fieldE_photo.disabled = false;
+                    checkPhotoUnlock();
                 } else {
-                    // 若切換到非今天選項，將欄位再次鎖住
-                    if (el.fieldE_photo) el.fieldE_photo.disabled = true;
-                    if (el.fieldF_contractor) el.fieldF_contractor.disabled = true;
-                    if (el.fieldG_inspector) el.fieldG_inspector.disabled = true;
-                    if (el.photoReqStar) el.photoReqStar.classList.add('hidden');
-                    if (el.contractorReqStar) el.contractorReqStar.classList.add('hidden');
-                    if (el.inspectorReqStar) el.inspectorReqStar.classList.add('hidden');
+                    el.fieldE_photo.disabled = true;
+                    el.fieldF_contractor.disabled = true;
+                    el.fieldG_inspector.disabled = true;
                 }
             }
+        };
+
+        // F and G unlock only if at least one photo is uploaded
+        function checkPhotoUnlock() {
+            const hasCloudRecord = (el.isFromCloud.value === 'true' && (el.fieldF_contractor.value || el.fieldG_inspector.value));
+            if (currentPhotos.length > 0 || hasCloudRecord) {
+                el.fieldF_contractor.disabled = false;
+                el.fieldG_inspector.disabled = false;
+            } else {
+                el.fieldF_contractor.disabled = true;
+                el.fieldG_inspector.disabled = true;
+            }
+        }
+
+        window.toggleWatermark = function() {
+            const isChecked = el.watermarkCheckbox.checked;
+            el.watermarkDate.disabled = !isChecked;
+            el.btnWatermarkToday.disabled = !isChecked;
+            if (isChecked && !el.watermarkDate.value) {
+                el.watermarkDate.value = formatDateDash(new Date());
+            }
+        };
+
+        window.setWatermarkToday = function() {
+            el.watermarkDate.value = formatDateDash(new Date());
         };
 
         window.setNowTime = function() {
@@ -523,6 +584,11 @@
             if (el.photoPreviewContainer) el.photoPreviewContainer.innerHTML = '';
             if (el.editBadgeContainer) el.editBadgeContainer.classList.add('hidden');
             
+            el.watermarkCheckbox.checked = false;
+            el.watermarkDate.value = '';
+            el.watermarkDate.disabled = true;
+            el.btnWatermarkToday.disabled = true;
+            
             if (el.form && el.form.elements) {
                 Array.from(el.form.elements).forEach(inp => {
                     inp.disabled = false;
@@ -530,42 +596,22 @@
                 });
             }
             if (el.btnNow) el.btnNow.disabled = false;
-            
-            if (state.appMode === 'add') {
-                if (el.fieldE_photo) el.fieldE_photo.disabled = true;
-                if (el.fieldF_contractor) el.fieldF_contractor.disabled = true;
-                if (el.fieldG_inspector) el.fieldG_inspector.disabled = true;
-                if (el.photoReqStar) el.photoReqStar.classList.add('hidden');
-                if (el.contractorReqStar) el.contractorReqStar.classList.add('hidden');
-                if (el.inspectorReqStar) el.inspectorReqStar.classList.add('hidden');
-            } else {
-                if (el.photoReqStar) el.photoReqStar.classList.remove('hidden');
-                if (el.contractorReqStar) el.contractorReqStar.classList.remove('hidden');
-                if (el.inspectorReqStar) el.inspectorReqStar.classList.remove('hidden');
-            }
-        }
-        
-        function unlockFieldsForAddMode() {
-            if (el.fieldE_photo) el.fieldE_photo.disabled = false;
-            if (el.fieldF_contractor) el.fieldF_contractor.disabled = false;
-            if (el.fieldG_inspector) el.fieldG_inspector.disabled = false;
-            if (el.photoReqStar) el.photoReqStar.classList.remove('hidden');
-            if (el.contractorReqStar) el.contractorReqStar.classList.remove('hidden');
-            if (el.inspectorReqStar) el.inspectorReqStar.classList.remove('hidden');
         }
 
         window.handlePhotoUpload = async function(event) {
             const files = event.target.files;
             if (files.length + currentPhotos.length > 10) {
-                alert('最多只能放置十張照片');
+                showMsg('最多只能放置十張照片', 'fa-exclamation-circle text-amber-500');
                 el.fieldE_photo.value = '';
                 return;
             }
 
-            const selectedDate = el.fieldA_date.value ? formatDateSlash(new Date(el.fieldA_date.value)) : formatDateSlash(new Date());
+            const useWatermark = el.watermarkCheckbox.checked;
+            const watermarkDateStr = el.watermarkDate.value ? formatDateSlash(new Date(el.watermarkDate.value)) : formatDateSlash(new Date());
 
             el.btnSubmit.disabled = true;
-            el.btnSubmitText.innerText = "照片處理與壓縮中...";
+            el.btnSubmitText.innerText = "照片處理與智慧壓縮中...";
+            el.btnSubmitLoader.classList.remove('hidden');
 
             try {
                 for (let i = 0; i < files.length; i++) {
@@ -576,20 +622,23 @@
                         reader.readAsDataURL(file);
                     });
                     
-                    const watermarkedCompressedBase64 = await addWatermarkAndCompress(base64Str, selectedDate);
-                    currentPhotos.push(watermarkedCompressedBase64);
+                    const processedBase64 = await addWatermarkAndCompress(base64Str, useWatermark, watermarkDateStr);
+                    currentPhotos.push(processedBase64);
                 }
                 renderPhotoPreview();
+                checkPhotoUnlock();
             } catch (e) {
                 console.error("照片處理失敗", e);
-                alert("照片處理失敗，請重試");
+                showMsg("照片處理失敗，請重試", 'fa-times-circle text-red-600');
             } finally {
+                el.fieldE_photo.value = '';
                 el.btnSubmit.disabled = false;
                 el.btnSubmitText.innerText = state.appMode === 'add' ? "完成上傳" : "儲存修改";
+                el.btnSubmitLoader.classList.add('hidden');
             }
         };
 
-        function addWatermarkAndCompress(base64Str, dateText) {
+        function addWatermarkAndCompress(base64Str, useWatermark, dateText) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
@@ -598,7 +647,7 @@
                     
                     let width = img.width;
                     let height = img.height;
-                    const MAX_DIMENSION = 1200;
+                    const MAX_DIMENSION = 1280;
 
                     if (width > height && width > MAX_DIMENSION) {
                         height *= MAX_DIMENSION / width;
@@ -614,25 +663,27 @@
                     ctx.clearRect(0, 0, width, height);
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    const fontSize = Math.max(20, Math.floor(width * 0.04));
-                    ctx.font = `bold ${fontSize}px sans-serif`;
-                    ctx.fillStyle = '#fbbf24';
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'bottom';
-                    
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-                    ctx.shadowBlur = 6;
-                    ctx.shadowOffsetX = 2;
-                    ctx.shadowOffsetY = 2;
-                    
-                    const padding = fontSize * 0.5;
-                    ctx.fillText(dateText, width - padding, height - padding);
+                    if (useWatermark && dateText) {
+                        const fontSize = Math.max(20, Math.floor(width * 0.04));
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.textAlign = 'right';
+                        ctx.textBaseline = 'bottom';
+                        
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                        ctx.shadowBlur = 6;
+                        ctx.shadowOffsetX = 2;
+                        ctx.shadowOffsetY = 2;
+                        
+                        const padding = fontSize * 0.5;
+                        ctx.fillText(dateText, width - padding, height - padding);
+                    }
                     
                     let quality = 0.8;
                     let dataUrl = canvas.toDataURL('image/jpeg', quality);
                     
                     while (dataUrl.length > 680000 && quality > 0.3) {
-                        quality -= 0.15;
+                        quality -= 0.1;
                         dataUrl = canvas.toDataURL('image/jpeg', quality);
                     }
                     
@@ -647,21 +698,30 @@
             
             currentPhotos.forEach((photoSrc, index) => {
                 const div = document.createElement('div');
-                div.className = 'relative border rounded-md overflow-hidden aspect-video bg-black flex items-center justify-center';
+                div.className = 'relative border rounded-md overflow-hidden aspect-video bg-black flex items-center justify-center cursor-pointer';
                 
                 const img = document.createElement('img');
                 img.src = photoSrc;
                 img.className = 'max-h-full max-w-full object-contain';
                 
+                // Clicking photo in view/edit mode opens lightbox viewer
+                div.onclick = () => {
+                    if (state.appMode !== 'add') {
+                        openPhotoViewer(index);
+                    }
+                };
+                
                 div.appendChild(img);
                 
                 if (state.appMode !== 'view') {
                     const delBtn = document.createElement('button');
-                    delBtn.className = 'absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-80 hover:opacity-100';
+                    delBtn.className = 'absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-85 hover:opacity-100 shadow z-10';
                     delBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    delBtn.onclick = () => {
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
                         currentPhotos.splice(index, 1);
                         renderPhotoPreview();
+                        checkPhotoUnlock();
                     };
                     div.appendChild(delBtn);
                 }
@@ -694,7 +754,8 @@
                 el.editBadgeContainer.innerHTML = '<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">已編輯</span>';
             }
             
-            unlockFieldsForAddMode();
+            if (el.fieldE_photo) el.fieldE_photo.disabled = false;
+            checkPhotoUnlock();
         }
 
         function lockAllFields() {
@@ -703,17 +764,18 @@
                 inp.classList.add('bg-gray-50');
             });
             el.btnNow.disabled = true;
+            el.watermarkCheckbox.disabled = true;
+            el.btnWatermarkToday.disabled = true;
         }
 
         window.saveRecord = async function() {
-            if (!el.fieldA_date.value) { alert('請選擇查驗日期'); return; }
-            if (!el.fieldB_time.value) { alert('請選擇查驗時間'); return; }
-            if (!el.fieldC_item.value.trim()) { alert('請填寫查驗項目'); return; }
+            if (!el.fieldA_date.value) { showMsg('請選擇查驗日期'); return; }
+            if (!el.fieldB_time.value) { showMsg('請選擇查驗時間'); return; }
+            if (!el.fieldC_item.value.trim()) { showMsg('請填寫查驗項目'); return; }
             
             if (!el.fieldF_contractor.disabled) {
-                if (currentPhotos.length === 0 && el.isFromCloud.value !== 'true') { alert('請上傳至少一張查驗照片'); return; }
-                if (!el.fieldF_contractor.value.trim()) { alert('請填寫施工廠商'); return; }
-                if (!el.fieldG_inspector.value.trim()) { alert('請填寫現場查驗監造'); return; }
+                if (!el.fieldF_contractor.value.trim()) { showMsg('請填寫施工廠商'); return; }
+                if (!el.fieldG_inspector.value.trim()) { showMsg('請填寫現場查驗監造'); return; }
             }
 
             const isEdit = !!el.recordId.value;
@@ -743,7 +805,7 @@
             renderCalendar();
 
             el.btnSubmit.disabled = true;
-            el.btnSubmitText.innerText = "雲端同步中...";
+            el.btnSubmitText.innerText = "資料上傳雲端中...";
             el.btnSubmitLoader.classList.remove('hidden');
 
             try {
@@ -765,17 +827,7 @@
                     body: JSON.stringify(payload)
                 });
                 
-                const responseText = await response.text();
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch(e) {
-                    if (responseText.trim().startsWith('<')) {
-                        result = { status: 'success' }; 
-                    } else {
-                        throw new Error("無法解析伺服器回應");
-                    }
-                }
+                const result = await response.json();
 
                 if (result.status === 'success') {
                     const idx = records.findIndex(r => r.id === newId);
@@ -786,11 +838,10 @@
                     }
                     closeModal();
                 } else {
-                    alert("雲端同步失敗：" + result.message);
+                    showMsg("雲端同步失敗：" + result.message, 'fa-times-circle text-red-600');
                 }
             } catch (error) {
-                console.error('Upload Error:', error);
-                alert("本機已儲存，但上傳雲端發生網路錯誤。");
+                console.warn('Upload via POST failed:', error);
                 closeModal(); 
             } finally {
                 el.btnSubmit.disabled = false;
@@ -800,35 +851,33 @@
         };
 
         window.deleteRecord = async function() {
-            if(!confirm("確定要刪除這筆紀錄嗎？\n刪除後，雲端硬碟的對應資料夾將會被移動至「已刪除」垃圾桶。")) {
-                return;
-            }
+            showConfirm("確定要刪除這筆紀錄嗎？\n刪除後，雲端資料夾將移動至「已刪除」垃圾桶中。", async () => {
+                const id = el.recordId.value;
+                const oldName = el.oldFolderName.value;
 
-            const id = el.recordId.value;
-            const oldName = el.oldFolderName.value;
+                records = records.filter(r => r.id !== id);
+                saveRecordsToLocal();
+                renderCalendar();
+                closeModal();
 
-            records = records.filter(r => r.id !== id);
-            saveRecordsToLocal();
-            renderCalendar();
-            closeModal();
-
-            if (oldName) {
-                try {
-                    const payload = { action: 'delete', oldFolderName: oldName };
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        redirect: 'follow',
-                        body: JSON.stringify(payload)
-                    });
-                } catch(e) {
-                    console.warn("⚠️ 刪除同步中斷:", e);
+                if (oldName) {
+                    try {
+                        const payload = { action: 'delete', oldFolderName: oldName };
+                        await fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            redirect: 'follow',
+                            body: JSON.stringify(payload)
+                        });
+                    } catch(e) {
+                        console.warn("⚠️ 刪除同步中斷:", e);
+                    }
                 }
-            }
+            });
         };
 
         window.downloadPhotos = function() {
             if (currentPhotos.length === 0) {
-                alert('沒有照片可以下載。');
+                showMsg('此紀錄未包含照片或尚未從雲端下載。');
                 return;
             }
             
@@ -867,6 +916,40 @@
             link.click();
         };
 
+        // Fullscreen Lightbox Photo Viewer Logic
+        let currentViewerIndex = 0;
+        let viewerPhotosList = [];
+
+        window.openPhotoViewer = function(index) {
+            viewerPhotosList = currentPhotos;
+            currentViewerIndex = index;
+            viewerScale = 1;
+            updateViewerImage();
+            el.photoViewerModal.classList.remove('hidden');
+        };
+
+        window.closePhotoViewer = function() {
+            el.photoViewerModal.classList.add('hidden');
+        };
+
+        function updateViewerImage() {
+            if (viewerPhotosList.length > 0) {
+                el.viewerImage.src = viewerPhotosList[currentViewerIndex];
+                el.viewerImage.style.transform = `scale(${viewerScale})`;
+                el.viewerCounter.innerText = `照片 ${currentViewerIndex + 1} / ${viewerPhotosList.length}`;
+            }
+        }
+
+        window.zoomViewer = function(delta) {
+            viewerScale = Math.max(0.5, Math.min(4, viewerScale + delta));
+            el.viewerImage.style.transform = `scale(${viewerScale})`;
+        };
+
+        window.resetZoomViewer = function() {
+            viewerScale = 1;
+            el.viewerImage.style.transform = `scale(${viewerScale})`;
+        };
+
         function renderCalendar() {
             if (state.viewMode === 'month') {
                 renderMonthView();
@@ -893,9 +976,9 @@
 
             const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             
-            let html = `<div class="flex-1 overflow-x-auto no-scrollbar"><div class="min-w-[700px] h-full flex flex-col">`;
+            let html = `<div class="flex-1 overflow-x-auto"><div class="min-w-[700px] h-full flex flex-col">`;
             
-            html += `<div class="grid grid-cols-7 gap-[1px] bg-gray-200 text-center text-sm font-semibold text-gray-600 py-2 min-w-[700px]">`;
+            html += `<div class="grid grid-cols-7 gap-[1px] bg-gray-200 text-center text-xs sm:text-sm font-semibold text-gray-600 py-1.5 sm:py-2 sticky top-0 z-20 bg-gray-50">`;
             dayNames.forEach(d => html += `<div>${d}</div>`);
             html += `</div>`;
 
@@ -925,10 +1008,10 @@
 
             const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
             
-            let html = `<div class="flex-1 overflow-x-auto no-scrollbar relative w-full"><div class="min-w-[1000px] flex flex-col min-h-full">`;
+            let html = `<div class="flex-1 overflow-x-auto relative w-full"><div class="min-w-[1000px] flex flex-col min-h-full">`;
             
             html += `<div class="week-header-grid text-sm font-semibold text-gray-600 text-center py-2 sticky top-0 z-20 shadow-sm bg-gray-50 border-b border-gray-300">
-                <div class="bg-gray-50 flex items-center justify-center">時間</div>`;
+                <div class="bg-gray-50 flex items-center justify-center text-xs">時間</div>`;
             for(let i=0; i<7; i++) {
                 const d = new Date(startOfWeek);
                 d.setDate(d.getDate() + i);
@@ -942,7 +1025,7 @@
 
             html += `<div class="week-body-grid flex-1 relative">`;
             
-            html += `<div class="flex flex-col bg-white border-r border-gray-200 w-[60px] shrink-0">`;
+            html += `<div class="flex flex-col bg-white border-r border-gray-200 w-[50px] shrink-0">`;
             for(let h=0; h<24; h++) {
                 html += `<div class="time-axis-cell">${String(h).padStart(2,'0')}:00</div>`;
             }
@@ -980,17 +1063,23 @@
                             topOffset = (hours * 60) + mins;
                         }
                         
-                        const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
-                        const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
+                        // Color-Coded Status: Orange = completed (has photos or contractor), Gray = incomplete
+                        const hasPhotos = (ev.photos && ev.photos.length > 0) || (ev.isFromCloud && ev.contractor && ev.supervisor);
+                        const badgeClass = hasPhotos 
+                            ? 'bg-orange-100 text-orange-800 border-l-2 border-orange-500' 
+                            : 'bg-gray-100 text-gray-500 border-l-2 border-gray-300';
+                        const cloudIcon = ev.isFromCloud ? '<i class="fas fa-cloud text-[10px] ml-1 opacity-60"></i>' : '';
                         
                         const widthPct = 100 / count;
                         const leftPct = idx * widthPct;
                         
                         html += `
-                            <div class="event-badge ${badgeClass} shadow-md absolute z-10 p-1 border border-white" 
+                            <div class="event-badge ${badgeClass} shadow-sm absolute z-10 p-1 border border-white" 
                                  style="top: ${topOffset}px; left: calc(${leftPct}%); width: calc(${widthPct}% - 2px);" 
                                  onclick="window.handleEventClick(event, '${ev.id}')" title="${ev.time} - ${ev.item}">
-                                <div class="font-bold text-[10px] leading-tight">${ev.time}</div>
+                                <div class="font-bold text-[10px] leading-tight flex justify-between">
+                                    <span>${ev.time}</span><span>${cloudIcon}</span>
+                                </div>
                                 <div class="truncate text-xs font-semibold leading-tight mt-0.5">${ev.item}</div>
                                 <div class="truncate text-[10px] opacity-80 leading-tight mt-0.5">${ev.contractor || ''}</div>
                             </div>
@@ -1008,7 +1097,6 @@
         function generateCellHtml(cellDate, isOtherMonth, isToday = false) {
             const dateStr = formatDate(cellDate);
             const dayEvents = records.filter(r => r.date === dateStr);
-            
             dayEvents.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             
             let classes = "calendar-cell flex flex-col";
@@ -1016,15 +1104,19 @@
             if(isToday) classes += " today";
 
             let html = `<div class="${classes}" onclick="if('${state.appMode}' === 'add') { window.openModal(); document.getElementById('fieldA_select').value='custom'; document.getElementById('fieldA_custom_container').classList.remove('hidden'); document.getElementById('fieldA_date').value='${formatDateDash(cellDate)}'; }">
-                <div class="text-right text-sm font-semibold mb-1 ${isToday ? 'text-blue-600' : ''}">${cellDate.getDate()}</div>
+                <div class="text-right text-xs sm:text-sm font-semibold mb-0.5 sm:mb-1 ${isToday ? 'text-blue-600' : ''}">${cellDate.getDate()}</div>
                 <div class="flex-1 space-y-1 overflow-y-auto no-scrollbar">`;
             
             dayEvents.forEach(ev => {
-                const isComplete = ev.contractor && ev.supervisor && (ev.photos?.length > 0 || ev.isFromCloud);
-                const badgeClass = ev.isFromCloud ? 'cloud-synced' : (isComplete ? 'mode-view' : 'bg-gray-100 text-gray-700 border-l-2 border-gray-400');
-                
-                html += `<div class="event-badge ${badgeClass}" onclick="window.handleEventClick(event, '${ev.id}')" title="${ev.item}">
-                    <span class="font-bold">${ev.time}</span> ${ev.item} ${ev.isEdited ? '<span class="text-orange-500 font-bold">(編)</span>' : ''}
+                const hasPhotos = (ev.photos && ev.photos.length > 0) || (ev.isFromCloud && ev.contractor && ev.supervisor);
+                const badgeClass = hasPhotos 
+                    ? 'bg-orange-100 text-orange-800 border-l-2 border-orange-500' 
+                    : 'bg-gray-100 text-gray-500 border-l-2 border-gray-300';
+                const cloudIcon = ev.isFromCloud ? '<i class="fas fa-cloud text-[10px] ml-1 opacity-60"></i>' : '';
+
+                html += `<div class="event-badge ${badgeClass} flex justify-between items-center" onclick="window.handleEventClick(event, '${ev.id}')" title="${ev.item}">
+                    <div class="truncate"><span class="font-bold mr-1">${ev.time}</span> ${ev.item} ${ev.isEdited ? '<span class="text-red-500 font-bold">(編)</span>' : ''}</div>
+                    <div>${cloudIcon}</div>
                 </div>`;
             });
             
